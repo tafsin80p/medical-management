@@ -1,0 +1,113 @@
+#intake-form button {
+  background-color: #2563eb;
+  color: white;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: medium;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#intake-form button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#intake-form-container select {
+  padding: 0px 10px;
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  font-weight: medium;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  outline: none;
+  height: 38px;
+}
+
+#intake-form-container select option {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e7eb;
+  outline: none;
+}
+
+#intake-form-container input,
+#intake-form-container textarea {
+  padding: 10px;
+  border-radius: 10px;
+  height: 35px;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  font-weight: medium;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+  outline: none;
+}
+
+#intake-form-container textarea {
+  height: 50px;
+}
+
+#intake-form-container input:focus,
+#intake-form-container select:focus,
+#intake-form-container textarea:focus {
+  border: 1px solid rgb(177, 178, 180);
+  outline: none;
+}
+
+#intake-form-container input.border-red-500,
+#intake-form-container select.border-red-500,
+#intake-form-container textarea.border-red-500 {
+  border: 1px solid red;
+}
+
+#intake-form-container input.border-gray-300,
+#intake-form-container select.border-gray-300,
+#intake-form-container textarea.border-gray-300 {
+  border: 1px solid #e5e7eb;
+}
+
+
+/* Step Circle Styles */
+.step-circle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Active Circle Styles */
+.step-circle.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+
+/* Line between circles */
+.step-line {
+  width: 4rem;
+  height: 2px;
+  background-color: #e5e7eb;
+  transition: background-color 0.3s ease;
+}
+
+/* Active Line Styles */
+.step-line.active {
+  background-color: #2563eb;
+}
