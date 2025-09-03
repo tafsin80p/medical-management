@@ -127,14 +127,15 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
         'pixelcode_dashboard_notifications' => "
             CREATE TABLE {$wpdb->prefix}pixelcode_dashboard_notifications (
                 id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
+                user_id BIGINT(20) UNSIGNED NOT NULL,
                 message TEXT NOT NULL,
                 type VARCHAR(20) NOT NULL,
                 time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 status VARCHAR(20) DEFAULT 'unread',
-
-                PRIMARY KEY (id)
+                PRIMARY KEY (id),
+                KEY user_id (user_id)
             ) $charset_collate;
-        "
+        ",
     ];
 
     $results = [];
@@ -174,27 +175,29 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
 
 
 
-
-
 // --------------------------- AJAX: Dashboard Notifications ---------------------------
 add_action('wp_ajax_add_dashboard_notification', function() {
-    check_ajax_referer('pixelcode_admin_nonce', 'nonce');
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message' => 'You must be logged in.']);
+    }
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
 
-    $message = sanitize_text_field($_POST['message']);
-    $type    = sanitize_text_field($_POST['type']);
+    $message   = sanitize_text_field($_POST['message']);
+    $type      = sanitize_text_field($_POST['type']);
+    $user_id   = get_current_user_id();
 
     $wpdb->insert(
         $table_name,
         [
+            'user_id' => $user_id,
             'message' => $message,
             'type'    => $type,
             'time'    => current_time('mysql'),
             'status'  => 'unread'
         ],
-        ['%s', '%s', '%s', '%s']
+        ['%d', '%s', '%s', '%s', '%s']
     );
 
     wp_send_json_success(['message' => 'Notification saved!']);
@@ -202,7 +205,7 @@ add_action('wp_ajax_add_dashboard_notification', function() {
 
 
 
-// --------------------------- AJAX: Fetch Notifications ---------------------------
+// --------------------------- AJAX: Get Notifications ---------------------------
 add_action('wp_ajax_get_dashboard_notifications', function() {
     check_ajax_referer('pixelcode_admin_nonce', 'nonce');
     
@@ -224,6 +227,8 @@ add_action('wp_ajax_mark_all_notifications_read', function() {
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
     $wpdb->update($table_name, ['status' => 'read'], ['status' => 'unread'], ['%s'], ['%s']);
 });
+
+
 
 
 // --------------------------- form submit function ---------------------------

@@ -25,7 +25,7 @@ jQuery(document).ready(function ($) {
     // Activate first tab by default
     $tabs.first().click();
 
-    
+
 
     // ---------------------------- Notification Function ----------------------------
     function showNotification(message, type = 'success') {
@@ -38,14 +38,14 @@ jQuery(document).ready(function ($) {
         </div>
         `);
 
-            // Create icon wrapper
-            const $iconWrapper = $(`
+        // Create icon wrapper
+        const $iconWrapper = $(`
             <div style="min-width: 30px;" class="inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-lg ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}">
                 ${type === 'success'
-                    ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
                     </svg>`
-                    : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0Zm1 15h-2v-2h2v2Zm0-4h-2V5h2v6Z"/>
                     </svg>`}
                 <span class="sr-only">${type === 'success' ? 'Check icon' : 'Error icon'}</span>
@@ -102,7 +102,7 @@ jQuery(document).ready(function ($) {
     });
 
     // Add new notification dynamically
-    function addNotification(message, type = 'success', time = 'just now', status = 'unread', ) {
+    function addNotification(message, type = 'success', time = 'just now', status = 'unread',) {
 
         const cleanedMessage = message.replace(/[ _?\/]/g, " ");
 
@@ -128,7 +128,7 @@ jQuery(document).ready(function ($) {
 
     // Function to check and hide dot if no unread
     function updateNotificationDot() {
-        const unreadCount = $notificationList.find('.notification-item[data-status="unread"]').length;        
+        const unreadCount = $notificationList.find('.notification-item[data-status="unread"]').length;
         if (unreadCount === 0) {
             $notificationDot.addClass('hidden');
         } else {
@@ -209,10 +209,9 @@ jQuery(document).ready(function ($) {
         $.post(ajax_object.ajax_url, {
             action: 'get_dashboard_notifications',
             nonce: ajax_object.nonce
-        }, function(response) {
-            if (response.success) {  
-                            
-                response.data.forEach(function(notif) {
+        }, function (response) {
+            if (response.success) {
+                response.data.forEach(function (notif) {
                     addNotification(notif.message, notif.type, notif.time, notif.status);
                 });
             }
