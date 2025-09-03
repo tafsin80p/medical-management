@@ -227,22 +227,18 @@ add_action('wp_ajax_mark_all_notifications_read', function() {
 
 
 // --------------------------- form submit function ---------------------------
-// Register AJAX hooks
-add_action('wp_ajax_pixelcode_submit_form', 'pixelcode_handle_form');
-add_action('wp_ajax_nopriv_pixelcode_submit_form', 'pixelcode_handle_form');
+add_action('wp_ajax_pixelcode_submit_form', 'pixelcode_submit_form');
+add_action('wp_ajax_nopriv_pixelcode_submit_form', 'pixelcode_submit_form');
 
-function pixelcode_handle_form() {
+function pixelcode_submit_form() {
     // Check nonce
-    check_ajax_referer('pixelcode_form_nonce', 'nonce');
+    check_ajax_referer('pixelcode_client_nonce', 'nonce');
 
     global $wpdb;
 
-    // Enable debugging
-    error_log(print_r($_POST, true));
-    error_log(print_r($_FILES, true));
-
     // Generate unique case_id
     $case_id = 'CASE-' . time() . '-' . wp_rand(1000, 9999);
+    
 
     // ---------------- 1️⃣ Personal Info ----------------
     $wpdb->insert(
@@ -353,6 +349,5 @@ function pixelcode_handle_form() {
         }
     }
 
-    wp_send_json_success("Case submitted successfully! Case ID: $case_id");
+    wp_send_json_success(['message' => 'Case submitted successfully!', 'case_id' => $case_id, 'case_data' => $_POST]);
 }
-
