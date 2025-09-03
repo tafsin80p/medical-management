@@ -131,7 +131,8 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 message TEXT NOT NULL,
                 type VARCHAR(20) NOT NULL,
                 time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                status VARCHAR(20) DEFAULT 'unread',
+                admin_status ENUM('unread','read') DEFAULT 'unread',
+                user_status ENUM('unread','read') DEFAULT 'unread',
                 PRIMARY KEY (id),
                 KEY user_id (user_id)
             ) $charset_collate;
@@ -149,18 +150,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 'success' => true,
                 'message' => "{$wpdb->prefix}{$suffix} created."
             ];
-
-            // Insert notification
-            $wpdb->insert(
-                "{$wpdb->prefix}pixelcode_dashboard_notifications",
-                [
-                    'message' => "{$wpdb->prefix}{$suffix} created successfully!",
-                    'type'    => 'success',
-                    'time'    => current_time('mysql'),
-                    'status'  => 'unread'
-                ],
-                ['%s','%s','%s','%s']
-            );
 
         } else {
             $results[$suffix] = [
@@ -185,7 +174,6 @@ add_action('wp_ajax_add_dashboard_notification', function() {
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
 
     $message   = sanitize_text_field($_POST['message']);
-    $type      = sanitize_text_field($_POST['type']);
     $user_id   = get_current_user_id();
 
     $wpdb->insert(
@@ -193,9 +181,9 @@ add_action('wp_ajax_add_dashboard_notification', function() {
         [
             'user_id' => $user_id,
             'message' => $message,
-            'type'    => $type,
             'time'    => current_time('mysql'),
-            'status'  => 'unread'
+            'admin_status' => 'unread',   
+            'user_status'  => 'unread'  
         ],
         ['%d', '%s', '%s', '%s', '%s']
     );
@@ -206,27 +194,68 @@ add_action('wp_ajax_add_dashboard_notification', function() {
 
 
 // --------------------------- AJAX: Get Notifications ---------------------------
-add_action('wp_ajax_get_dashboard_notifications', function() {
-    check_ajax_referer('pixelcode_admin_nonce', 'nonce');
-    
+add_action('wp_ajax_get_dashboard_notifications', function() {    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Not logged in');
+    }
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
+    $user_id    = get_current_user_id();
 
-    $notifications = $wpdb->get_results("SELECT * FROM $table_name ORDER BY time ASC", ARRAY_A);
+    if (current_user_can('manage_options')) {
+        $notifications = $wpdb->get_results(
+            "SELECT * FROM $table_name ORDER BY time DESC",
+            ARRAY_A
+        );
+    } else {
+        $notifications = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time DESC",
+                $user_id
+            ),
+            ARRAY_A
+        );
+    }
 
     wp_send_json_success($notifications);
 });
 
 
 
+
 // --------------------------- AJAX: Mark All Notifications Read ---------------------------
 add_action('wp_ajax_mark_all_notifications_read', function() {
-    check_ajax_referer('pixelcode_admin_nonce', 'nonce');
-    
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message' => 'Not logged in']);
+    }
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
-    $wpdb->update($table_name, ['status' => 'read'], ['status' => 'unread'], ['%s'], ['%s']);
+    $user_id    = get_current_user_id();
+
+    if ( current_user_can('manage_options') ) {
+        $wpdb->update(
+            $table_name,
+            ['admin_status' => 'read'],
+            ['admin_status' => 'unread'],
+            ['%s'],
+            ['%s']
+        );
+    } else {
+        $wpdb->update(
+            $table_name,
+            ['user_status' => 'read'],
+            ['user_id' => $user_id, 'user_status' => 'unread'],
+            ['%s'],
+            ['%d','%s']
+        );
+    }
+
+    wp_send_json_success(['message' => 'All notifications marked as read.']);
 });
+
 
 
 
