@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     stepLines.forEach((line, i) => {
-      if (i < step) {
+      if (i < step - 1) {
         line.classList.add("active");
       } else {
         line.classList.remove("active");
@@ -106,22 +106,42 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function validateStep(step) {
-    let valid = true;
-    const inputs = steps[step].querySelectorAll("input,select,textarea");
-    inputs.forEach((input) => {
-      input.classList.remove("border-red-500");
-      if (
-        input.hasAttribute("required") &&
-        ((input.type === "checkbox" && !input.checked) ||
-          (!input.value.trim() && input.type !== "checkbox"))
-      ) {
+// --- Form Validation ---
+function validateStep(step) {
+  let valid = true;
+  // label বাদ দিয়ে শুধু ইনপুট ফিল্ডগুলো নাও
+  const inputs = steps[step].querySelectorAll("input, select, textarea");
+  
+  inputs.forEach((input) => {
+    input.classList.remove("border-red-500");
+
+    if (input.hasAttribute("required")) {
+      // checkbox check
+      if (input.type === "checkbox" && !input.checked) {
+        valid = false;
+        input.classList.add("border-red-500");
+      } 
+      // file input check
+      else if (input.type === "file" && input.files.length === 0) {
+        valid = false;
+        // file input hidden থাকে, তাই label-এ error দেখাই
+        const label = input.parentElement.querySelector("label");
+        if (label) {
+          label.classList.add("border-red-500");
+        }
+      } 
+      // normal text/select/textarea check
+      else if (input.type !== "checkbox" && input.type !== "file" && !input.value.trim()) {
         valid = false;
         input.classList.add("border-red-500");
       }
-    });
-    return valid;
-  }
+    }
+  });
+
+  return valid;
+}
+
+
 
   nextBtn.addEventListener("click", () => {
     if (validateStep(currentStep) && currentStep < steps.length - 1) {
@@ -174,19 +194,19 @@ function setupFilePreview(inputId, previewId) {
   const preview = document.getElementById(previewId);
 
   input.addEventListener("change", () => {
-    preview.innerHTML = ""; // reset preview
+    preview.innerHTML = "";
 
     Array.from(input.files).forEach((file, index) => {
       const li = document.createElement("li");
       li.className =
-        "flex items-center justify-between bg-gray-100 px-3 py-1 rounded";
+        "flex items-center justify-between bg-gray-100 px-3 py-1 rounded mt-4 text-sm w-full";
 
       const fileInfo = document.createElement("span");
       fileInfo.textContent = file.name;
 
       const removeBtn = document.createElement("button");
-      removeBtn.textContent = "❌";
-      removeBtn.className = "ml-2 text-red-600 hover:text-red-800";
+      removeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+      removeBtn.className = "ml-2 text-white";
 
       removeBtn.addEventListener("click", () => {
         // remove file from FileList (workaround: rebuild FileList)

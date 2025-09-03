@@ -168,62 +168,73 @@ defined('ABSPATH') or die('No direct access.');
 
             <!-- Step 4: Document Upload -->
             <div class="step hidden" id="step-4">
-                <h2 class="text-xm text-center mb-8">📄 Document Upload</h2>
+                <h2 class="text-xl font-semibold text-center mb-8">📄 Document Upload</h2>
 
-                <div class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <!-- DD214 -->
-                    <div>
-                        <label for="dd214"
-                            class="cursor-pointer px-4 py-2 bg-gray-200 text-black border capitalize rounded-lg transition">
-                            📄 choose file Upload DD214
+                    <!-- Upload Card -->
+                    <div
+                        class="flex flex-col items-center py-4 bg-white border-2 border-dashed rounded-2xl shadow-sm hover:shadow-md transition">
+                        <label for="dd214" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <span class="text-4xl">📄</span>
+                            <span class="text-sm font-medium text-gray-700">Upload DD214</span>
+                            <span class="text-xs text-gray-400">(Required)</span>
                         </label>
                         <input id="dd214" type="file" name="documents_dd214[]" required class="hidden">
-                        <ul id="dd214-preview" class="mt-2 space-y-1 text-sm"></ul>
+                        <ul id="dd214-preview" class="mt-3 space-y-1 text-sm text-gray-600"></ul>
                     </div>
 
                     <!-- Medical Records -->
-                    <div>
-                        <label for="medical"
-                            class="cursor-pointer px-4 py-2 bg-gray-200 text-black border capitalize rounded-lg transition">
-                            📄 choose file Upload Medical Records
+                    <div
+                        class="flex flex-col items-center py-4 bg-white border-2 border-dashed rounded-2xl shadow-sm hover:shadow-md transition">
+                        <label for="medical" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <span class="text-4xl">📑</span>
+                            <span class="text-sm font-medium text-gray-700">Upload Medical Records</span>
+                            <span class="text-xs text-gray-400">(Multiple, Required)</span>
                         </label>
                         <input id="medical" type="file" name="documents_medical[]" required multiple class="hidden">
-                        <ul id="medical-preview" class="mt-2 space-y-1 text-sm"></ul>
+                        <ul id="medical-preview" class="mt-3 space-y-1 text-sm text-gray-600"></ul>
                     </div>
 
                     <!-- VA Rating Decision -->
-                    <div>
-                        <label for="rating"
-                            class="cursor-pointer px-4 py-2 bg-gray-200 text-black border capitalize rounded-lg transition">
-                            📄 choose file Upload Rating Decision
+                    <div
+                        class="flex flex-col items-center py-4 bg-white border-2 border-dashed rounded-2xl shadow-sm hover:shadow-md transition">
+                        <label for="rating" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <span class="text-4xl">📝</span>
+                            <span class="text-sm font-medium text-gray-700">Upload Rating Decision</span>
+                            <span class="text-xs text-gray-400">(Required)</span>
                         </label>
                         <input id="rating" type="file" name="documents_rating[]" required class="hidden">
-                        <ul id="rating-preview" class="mt-2 space-y-1 text-sm"></ul>
+                        <ul id="rating-preview" class="mt-3 space-y-1 text-sm text-gray-600"></ul>
                     </div>
 
                     <!-- VA Decision Letters -->
-                    <div>
-                        <label for="decision"
-                            class="cursor-pointer px-4 py-2 bg-gray-200 text-black border capitalize rounded-lg transition">
-                            📄 choose file Upload Decision Letters
+                    <div
+                        class="flex flex-col items-center py-4 bg-white border-2 border-dashed rounded-2xl shadow-sm hover:shadow-md transition">
+                        <label for="decision" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <span class="text-4xl">📬</span>
+                            <span class="text-sm font-medium text-gray-700">Upload Decision Letters</span>
+                            <span class="text-xs text-gray-400">(Multiple, Required)</span>
                         </label>
                         <input id="decision" type="file" name="documents_decision[]" required multiple class="hidden">
-                        <ul id="decision-preview" class="mt-2 space-y-1 text-sm"></ul>
+                        <ul id="decision-preview" class="mt-3 space-y-1 text-sm text-gray-600"></ul>
                     </div>
 
                     <!-- Optional -->
-                    <div>
-                        <label for="optional"
-                            class="cursor-pointer px-4 py-2 bg-gray-200 text-black rounded-lg transition">
-                            📄 choose file Upload Optional Docs
+                    <div
+                        class="flex flex-col items-center py-4 bg-white border-2 border-dashed rounded-2xl shadow-sm hover:shadow-md transition">
+                        <label for="optional" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <span class="text-4xl">📂</span>
+                            <span class="text-sm font-medium text-gray-700">Upload Optional Docs</span>
+                            <span class="text-xs text-gray-400">(Optional, Multiple)</span>
                         </label>
                         <input id="optional" type="file" name="documents_optional[]" multiple class="hidden">
-                        <ul id="optional-preview" class="mt-2 space-y-1 text-sm"></ul>
+                        <ul id="optional-preview" class="mt-3 space-y-1 text-sm text-gray-600"></ul>
                     </div>
 
                 </div>
             </div>
+
 
 
             <!-- Step 5: Consent -->
