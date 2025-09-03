@@ -1,4 +1,59 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+  // ---------------------------- Notification Function ----------------------------
+  function showNotification(message, type = 'success') {    
+
+    const cleanedMessage = message.replace(/[ _?\/]/g, " ");    
+
+    // Create toast container
+    const $toast = $(`
+        <div role="alert" class="fixed top-4 mt-8 right-4 p-4 gap-4 flex items-center justify-between w-full max-w-xs text-gray-500 rounded-lg shadow-sm ${type === 'success' ? 'bg-white' : 'bg-red-100 text-red-700'}">
+        </div>
+        `);
+
+    // Create icon wrapper
+    const $iconWrapper = $(`
+            <div style="min-width: 30px;" class="inline-flex items-center justify-center shrink-0 w-8 h-8 rounded-lg ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'}">
+                ${type === 'success'
+        ? `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                    </svg>`
+        : `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0Zm1 15h-2v-2h2v2Zm0-4h-2V5h2v6Z"/>
+                    </svg>`}
+                <span class="sr-only">${type === 'success' ? 'Check icon' : 'Error icon'}</span>
+            </div>
+        `);
+
+    // Create message div
+    const $messageDiv = $(`<div class="ms-3 text-sm font-normal">${cleanedMessage}</div>`);
+
+    // Create close button
+    const $closeBtn = $(`
+            <button type="button" aria-label="Close" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700">
+                <span class="sr-only">Close</span>
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                </svg>
+            </button>
+        `);
+
+    $closeBtn.on('click', function () {
+      $toast.remove();
+    });
+
+    // Append children
+    $toast.append($iconWrapper, $messageDiv, $closeBtn);
+
+    // Append toast to body
+    $('body').append($toast);
+
+    // Auto-remove after 3 seconds
+    // setTimeout(() => $toast.remove(), 3000);
+  }
+
+
+
   // ------------------------ tab functionality ----------------------------
   const tabButtons = document.querySelectorAll(".tab-button");
   const tabPanels = document.querySelectorAll(".tab-panel");
@@ -70,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Step Management ---
   const steps = document.querySelectorAll(".step");
-  let currentStep = 3;
+  let currentStep = 0;
 
   const nextBtn = document.getElementById("next-btn");
   const prevBtn = document.getElementById("prev-btn");
@@ -98,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     stepLines.forEach((line, i) => {
-      if (i < step) {
+      if (i < step - 1) {
         line.classList.add("active");
       } else {
         line.classList.remove("active");
@@ -106,22 +161,64 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // --- Form Validation ---
   function validateStep(step) {
     let valid = true;
-    const inputs = steps[step].querySelectorAll("input,select,textarea");
+    const inputs = steps[step].querySelectorAll("input, select, textarea");
+
     inputs.forEach((input) => {
       input.classList.remove("border-red-500");
-      if (
-        input.hasAttribute("required") &&
-        ((input.type === "checkbox" && !input.checked) ||
-          (!input.value.trim() && input.type !== "checkbox"))
-      ) {
-        valid = false;
-        input.classList.add("border-red-500");
+
+      let oldError = input.parentElement.querySelector(".error-message");
+      if (oldError) oldError.remove();
+
+      if (input.hasAttribute("required")) {
+        // checkbox check
+        if (input.type === "checkbox" && !input.checked) {
+          valid = false;
+          input.classList.add("border-red-500");
+          showError(input, "This field is required");
+        }
+        // file input check
+        else if (input.type === "file" && input.files.length === 0) {
+          valid = false;
+          const label = input.parentElement.querySelector("label");
+          if (label) {
+            label.classList.add("border-red-500");
+          }
+          showError(input, "This file is required");
+        }
+        // normal text/select/textarea check
+        else if (input.type !== "checkbox" && input.type !== "file" && !input.value.trim()) {
+          valid = false;
+          input.classList.add("border-red-500");
+          showError(input, "This field is required");
+        }
       }
     });
+
     return valid;
   }
+
+  // Helper function: error message দেখায়
+  function showError(input, message) {
+    const error = document.createElement("p");
+    error.className = "error-message text-xs text-red-500 mt-1";
+    error.innerText = message;
+
+    // file input হলে label-এর পরে বসাও, না হলে input-এর পরে
+    if (input.type === "file") {
+      const label = input.parentElement.querySelector("label");
+      if (label) {
+        label.insertAdjacentElement("afterend", error);
+      }
+    } else {
+      input.insertAdjacentElement("afterend", error);
+    }
+  }
+
+
+
 
   nextBtn.addEventListener("click", () => {
     if (validateStep(currentStep) && currentStep < steps.length - 1) {
@@ -166,49 +263,146 @@ document.addEventListener("DOMContentLoaded", function () {
       .forEach((el) => (el.value = ""));
     container.appendChild(entry);
   });
+
+
+
+
+  // ------------------ File Input Preview and Removal ------------------------------
+  function setupFilePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+
+    input.addEventListener("change", () => {
+      preview.innerHTML = "";
+
+      Array.from(input.files).forEach((file, index) => {
+        const li = document.createElement("li");
+        li.className =
+          "flex items-center justify-between bg-gray-100 px-3 py-1 rounded mt-4 text-sm w-full";
+
+        const fileInfo = document.createElement("span");
+        fileInfo.textContent = file.name;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+        removeBtn.className = "ml-2 text-white";
+
+        removeBtn.addEventListener("click", () => {
+          // remove file from FileList (workaround: rebuild FileList)
+          const dt = new DataTransfer();
+          Array.from(input.files).forEach((f, i) => {
+            if (i !== index) dt.items.add(f);
+          });
+          input.files = dt.files;
+
+          li.remove();
+        });
+
+        li.appendChild(fileInfo);
+        li.appendChild(removeBtn);
+        preview.appendChild(li);
+      });
+    });
+  }
+
+  // Attach previews
+  setupFilePreview("dd214", "dd214-preview");
+  setupFilePreview("medical", "medical-preview");
+  setupFilePreview("rating", "rating-preview");
+  setupFilePreview("decision", "decision-preview");
+  setupFilePreview("optional", "optional-preview");
+
+
+
+
+  // ------------------ AJAX Form Submission ------------------------------
+
+  const form = document.getElementById('intake-form');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    // Add WordPress AJAX action & nonce
+    formData.append('action', 'pixelcode_submit_form');
+    formData.append('nonce', ajax_object.nonce);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    fetch(ajax_object.ajax_url, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+
+        if (data.success) {
+          form.reset();
+          document.querySelectorAll('.preview-list').forEach(ul => ul.innerHTML = '');
+          currentStep = 0;
+          showStep(currentStep);
+          caseFormContainer.classList.toggle("hidden");
+          showNotification('Form submitted successfully!', 'success');
+        } else {
+
+        }
+      })
+      .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      });
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
 
-// ------------------ File Input Preview and Removal ------------------------------
-function setupFilePreview(inputId, previewId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-
-  input.addEventListener("change", () => {
-    preview.innerHTML = ""; // reset preview
-
-    Array.from(input.files).forEach((file, index) => {
-      const li = document.createElement("li");
-      li.className =
-        "flex items-center justify-between bg-gray-100 px-3 py-1 rounded";
-
-      const fileInfo = document.createElement("span");
-      fileInfo.textContent = file.name;
-
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "❌";
-      removeBtn.className = "ml-2 text-red-600 hover:text-red-800";
-
-      removeBtn.addEventListener("click", () => {
-        // remove file from FileList (workaround: rebuild FileList)
-        const dt = new DataTransfer();
-        Array.from(input.files).forEach((f, i) => {
-          if (i !== index) dt.items.add(f);
-        });
-        input.files = dt.files;
-
-        li.remove();
-      });
-
-      li.appendChild(fileInfo);
-      li.appendChild(removeBtn);
-      preview.appendChild(li);
-    });
-  });
-}
-
-// Attach previews
-setupFilePreview("dd214", "dd214-preview");
-setupFilePreview("medical", "medical-preview");
-setupFilePreview("rating", "rating-preview");
-setupFilePreview("decision", "decision-preview");
-setupFilePreview("optional", "optional-preview");
