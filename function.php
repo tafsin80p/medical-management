@@ -22,9 +22,9 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 case_id VARCHAR(100) NOT NULL,
                 case_status VARCHAR(100) DEFAULT 'pending',
 
-                case_package_type VARCHAR(100) NOT NULL,
-                case_package_price VARCHAR(100) NOT NULL,
-                case_priority VARCHAR(100) NOT NULL,
+                package_type VARCHAR(100) NOT NULL,
+                package_price VARCHAR(100) NOT NULL,
+                priority VARCHAR(100) NOT NULL,
 
                 payment_status VARCHAR(100) DEFAULT 'pending',
                 payment_date DATE DEFAULT NULL,
@@ -67,8 +67,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 service_composition VARCHAR(100),
                 mos_aoc_rate VARCHAR(10),
                 duty_position VARCHAR(100),
-                start_date DATE,
-                end_date DATE,
 
                 PRIMARY KEY (id),
                 KEY case_id (case_id),
@@ -92,17 +90,19 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
         ",
 
         // VA Claims
-        'pixelcode_cases_va_claims' => "
+        $pixelcode_cases_va_claims = "
             CREATE TABLE {$wpdb->prefix}pixelcode_cases_va_claims (
                 id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
                 case_id VARCHAR(100) NOT NULL,
-                `condition` VARCHAR(255),
-                claim_type VARCHAR(20) DEFAULT NULL,
-                explanation TEXT,
-                linked_condition VARCHAR(255),
-                mtf_seen TINYINT(1) DEFAULT 0,
-                mtf_details TEXT,
-                current_treatment TEXT,
+                `condition` VARCHAR(255) NOT NULL,
+                claim_type VARCHAR(20) DEFAULT NULL,              
+                primary_event TEXT,                               
+                linked_condition VARCHAR(255),                   
+                service_explanation TEXT,                         
+                mtf_seen TINYINT(1) DEFAULT 0,                   
+                mtf_details TEXT,                                
+                current_treatment TEXT,                           
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY case_id (case_id)
             ) $charset_collate;
@@ -224,4 +224,135 @@ add_action('wp_ajax_mark_all_notifications_read', function() {
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
     $wpdb->update($table_name, ['status' => 'read'], ['status' => 'unread'], ['%s'], ['%s']);
 });
+
+
+// --------------------------- form submit function ---------------------------
+// Register AJAX hooks
+add_action('wp_ajax_pixelcode_submit_form', 'pixelcode_handle_form');
+add_action('wp_ajax_nopriv_pixelcode_submit_form', 'pixelcode_handle_form');
+
+function pixelcode_handle_form() {
+    // Check nonce
+    check_ajax_referer('pixelcode_form_nonce', 'nonce');
+
+    global $wpdb;
+
+    // Enable debugging
+    error_log(print_r($_POST, true));
+    error_log(print_r($_FILES, true));
+
+    // Generate unique case_id
+    $case_id = 'CASE-' . time() . '-' . wp_rand(1000, 9999);
+
+    // ---------------- 1️⃣ Personal Info ----------------
+    $wpdb->insert(
+        "{$wpdb->prefix}pixelcode_cases",
+        [
+            'case_id' => $case_id,
+            'first_name' => sanitize_text_field($_POST['first_name']),
+            'last_name' => sanitize_text_field($_POST['last_name']),
+            'email' => sanitize_email($_POST['email']),
+            'phone' => sanitize_text_field($_POST['phone']),
+            'birth_date' => sanitize_text_field($_POST['dob']),
+            'va_file_number' => sanitize_text_field($_POST['va_file_number']),
+            'address' => sanitize_text_field($_POST['address']),
+            'city' => sanitize_text_field($_POST['city']),
+            'state' => sanitize_text_field($_POST['state']),
+            'zip' => sanitize_text_field($_POST['zip_code']),
+            'consent_data_collection' => isset($_POST['data_consent']) ? 1 : 0,
+            'consent_privacy_policy' => isset($_POST['privacy_consent']) ? 1 : 0,
+            'consent_communication' => isset($_POST['communication_consent']) ? 1 : 0,
+        ]
+    );
+
+    // ---------------- 2️⃣ Service History + Deployments ----------------
+    if(!empty($_POST['service_branch'])) {
+        foreach($_POST['service_branch'] as $i => $branch) {
+            $wpdb->insert(
+                "{$wpdb->prefix}pixelcode_cases_service_history",
+                [
+                    'case_id' => $case_id,
+                    'branch_of_service' => sanitize_text_field($branch),
+                    'service_composition' => sanitize_text_field($_POST['service_composition'][$i]),
+                    'mos_aoc_rate' => sanitize_text_field($_POST['mos_aoc_rate'][$i]),
+                    'duty_position' => sanitize_text_field($_POST['duty_position'][$i]),
+                ]
+            );
+
+            $service_history_id = $wpdb->insert_id;
+
+            if(isset($_POST['deployment_location'][$i])) {
+                foreach($_POST['deployment_location'][$i] as $dIndex => $location) {
+                    if(empty($location)) continue;
+                    $wpdb->insert(
+                        "{$wpdb->prefix}pixelcode_cases_deployments",
+                        [
+                            'service_history_id' => $service_history_id,
+                            'location' => sanitize_text_field($location),
+                            'dates_in_theater' => sanitize_text_field($_POST['deployment_dates'][$i][$dIndex]),
+                            'job' => sanitize_text_field($_POST['deployment_job'][$i][$dIndex]),
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    // ---------------- 3️⃣ VA Claims ----------------
+    if(!empty($_POST['condition'])) {
+        foreach($_POST['condition'] as $i => $cond) {
+            $wpdb->insert(
+                "{$wpdb->prefix}pixelcode_cases_va_claims",
+                [
+                    'case_id' => $case_id,
+                    'condition' => sanitize_text_field($cond),
+                    'claim_type' => sanitize_text_field($_POST['condition_type'][$i]),
+                    'primary_event' => sanitize_textarea_field($_POST['primary_event'][$i]),
+                    'linked_condition' => sanitize_text_field($_POST['secondary_linked'][$i]),
+                    'service_explanation' => sanitize_textarea_field($_POST['service_explanation'][$i]),
+                    'mtf_seen' => intval($_POST['mtf_seen'][$i]),
+                    'mtf_details' => sanitize_textarea_field($_POST['mtf_details'][$i]),
+                    'current_treatment' => sanitize_textarea_field($_POST['current_treatment'][$i]),
+                ]
+            );
+        }
+    }
+
+    // ---------------- 4️⃣ File Uploads ----------------
+    $doc_fields = [
+        'documents_dd214' => 1,
+        'documents_medical' => 1,
+        'documents_rating' => 1,
+        'documents_decision' => 1,
+        'documents_optional' => 0
+    ];
+
+    $upload_dir = wp_upload_dir()['basedir'] . '/cases/' . $case_id;
+    if(!file_exists($upload_dir)) wp_mkdir_p($upload_dir);
+
+    foreach($doc_fields as $field => $is_required) {
+        if(!empty($_FILES[$field]['name'])) {
+            foreach($_FILES[$field]['name'] as $i => $name) {
+                if(empty($name)) continue;
+                $tmp_name = $_FILES[$field]['tmp_name'][$i];
+                $filename = sanitize_file_name($name);
+                $target_file = $upload_dir . '/' . $filename;
+
+                if(move_uploaded_file($tmp_name, $target_file)) {
+                    $wpdb->insert(
+                        "{$wpdb->prefix}pixelcode_cases_case_documents",
+                        [
+                            'case_id' => $case_id,
+                            'document_type' => str_replace('documents_', '', $field),
+                            'file_path' => str_replace(ABSPATH, '/', $target_file),
+                            'required' => $is_required
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    wp_send_json_success("Case submitted successfully! Case ID: $case_id");
+}
 

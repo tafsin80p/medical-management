@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Step Management ---
   const steps = document.querySelectorAll(".step");
-  let currentStep = 3;
+  let currentStep = 0;
 
   const nextBtn = document.getElementById("next-btn");
   const prevBtn = document.getElementById("prev-btn");
@@ -106,40 +106,63 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-// --- Form Validation ---
-function validateStep(step) {
-  let valid = true;
-  // label বাদ দিয়ে শুধু ইনপুট ফিল্ডগুলো নাও
-  const inputs = steps[step].querySelectorAll("input, select, textarea");
-  
-  inputs.forEach((input) => {
-    input.classList.remove("border-red-500");
+  // --- Form Validation ---
+  function validateStep(step) {
+    let valid = true;
+    const inputs = steps[step].querySelectorAll("input, select, textarea");
 
-    if (input.hasAttribute("required")) {
-      // checkbox check
-      if (input.type === "checkbox" && !input.checked) {
-        valid = false;
-        input.classList.add("border-red-500");
-      } 
-      // file input check
-      else if (input.type === "file" && input.files.length === 0) {
-        valid = false;
-        // file input hidden থাকে, তাই label-এ error দেখাই
-        const label = input.parentElement.querySelector("label");
-        if (label) {
-          label.classList.add("border-red-500");
+    inputs.forEach((input) => {
+      input.classList.remove("border-red-500");
+
+      // আগের error মেসেজ মুছে ফেলি
+      let oldError = input.parentElement.querySelector(".error-message");
+      if (oldError) oldError.remove();
+
+      if (input.hasAttribute("required")) {
+        // checkbox check
+        if (input.type === "checkbox" && !input.checked) {
+          valid = false;
+          input.classList.add("border-red-500");
+          showError(input, "This field is required");
         }
-      } 
-      // normal text/select/textarea check
-      else if (input.type !== "checkbox" && input.type !== "file" && !input.value.trim()) {
-        valid = false;
-        input.classList.add("border-red-500");
+        // file input check
+        else if (input.type === "file" && input.files.length === 0) {
+          valid = false;
+          const label = input.parentElement.querySelector("label");
+          if (label) {
+            label.classList.add("border-red-500");
+          }
+          showError(input, "This file is required");
+        }
+        // normal text/select/textarea check
+        else if (input.type !== "checkbox" && input.type !== "file" && !input.value.trim()) {
+          valid = false;
+          input.classList.add("border-red-500");
+          showError(input, "This field is required");
+        }
       }
-    }
-  });
+    });
 
-  return valid;
-}
+    return valid;
+  }
+
+  // Helper function: error message দেখায়
+  function showError(input, message) {
+    const error = document.createElement("p");
+    error.className = "error-message text-xs text-red-500 mt-1";
+    error.innerText = message;
+
+    // file input হলে label-এর পরে বসাও, না হলে input-এর পরে
+    if (input.type === "file") {
+      const label = input.parentElement.querySelector("label");
+      if (label) {
+        label.insertAdjacentElement("afterend", error);
+      }
+    } else {
+      input.insertAdjacentElement("afterend", error);
+    }
+  }
+
 
 
 
@@ -186,49 +209,137 @@ function validateStep(step) {
       .forEach((el) => (el.value = ""));
     container.appendChild(entry);
   });
+
+
+
+
+  // ------------------ File Input Preview and Removal ------------------------------
+  function setupFilePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+
+    input.addEventListener("change", () => {
+      preview.innerHTML = "";
+
+      Array.from(input.files).forEach((file, index) => {
+        const li = document.createElement("li");
+        li.className =
+          "flex items-center justify-between bg-gray-100 px-3 py-1 rounded mt-4 text-sm w-full";
+
+        const fileInfo = document.createElement("span");
+        fileInfo.textContent = file.name;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+        removeBtn.className = "ml-2 text-white";
+
+        removeBtn.addEventListener("click", () => {
+          // remove file from FileList (workaround: rebuild FileList)
+          const dt = new DataTransfer();
+          Array.from(input.files).forEach((f, i) => {
+            if (i !== index) dt.items.add(f);
+          });
+          input.files = dt.files;
+
+          li.remove();
+        });
+
+        li.appendChild(fileInfo);
+        li.appendChild(removeBtn);
+        preview.appendChild(li);
+      });
+    });
+  }
+
+  // Attach previews
+  setupFilePreview("dd214", "dd214-preview");
+  setupFilePreview("medical", "medical-preview");
+  setupFilePreview("rating", "rating-preview");
+  setupFilePreview("decision", "decision-preview");
+  setupFilePreview("optional", "optional-preview");
+
+
+
+
+  // ------------------ AJAX Form Submission ------------------------------
+
+  const form = document.getElementById('intake-form');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    console.log('Form submission started');
+
+    const formData = new FormData(form);
+
+    // Add WordPress AJAX action & nonce
+    formData.append('action', 'pixelcode_submit_form');
+    formData.append('nonce', ajax_object.nonce);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    fetch(ajax_object.ajax_url, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+
+        console.log(data);
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
 
-// ------------------ File Input Preview and Removal ------------------------------
-function setupFilePreview(inputId, previewId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-
-  input.addEventListener("change", () => {
-    preview.innerHTML = "";
-
-    Array.from(input.files).forEach((file, index) => {
-      const li = document.createElement("li");
-      li.className =
-        "flex items-center justify-between bg-gray-100 px-3 py-1 rounded mt-4 text-sm w-full";
-
-      const fileInfo = document.createElement("span");
-      fileInfo.textContent = file.name;
-
-      const removeBtn = document.createElement("button");
-      removeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
-      removeBtn.className = "ml-2 text-white";
-
-      removeBtn.addEventListener("click", () => {
-        // remove file from FileList (workaround: rebuild FileList)
-        const dt = new DataTransfer();
-        Array.from(input.files).forEach((f, i) => {
-          if (i !== index) dt.items.add(f);
-        });
-        input.files = dt.files;
-
-        li.remove();
-      });
-
-      li.appendChild(fileInfo);
-      li.appendChild(removeBtn);
-      preview.appendChild(li);
-    });
-  });
-}
-
-// Attach previews
-setupFilePreview("dd214", "dd214-preview");
-setupFilePreview("medical", "medical-preview");
-setupFilePreview("rating", "rating-preview");
-setupFilePreview("decision", "decision-preview");
-setupFilePreview("optional", "optional-preview");
