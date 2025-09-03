@@ -101,6 +101,9 @@ jQuery(document).ready(function ($) {
         }
     });
 
+
+
+
     // Add new notification dynamically
     function addNotification(message, type = 'success', time = 'just now', status = 'unread',) {
 
@@ -151,7 +154,6 @@ jQuery(document).ready(function ($) {
             action: 'add_dashboard_notification',
             nonce: ajax_object.nonce,
             message: message,
-            type: type
         });
     }
 
@@ -171,17 +173,19 @@ jQuery(document).ready(function ($) {
             success: function (response) {
                 if (response.success) {
                     $.each(response.data, function (key, val) {
-                        pushNotification(val.message, 'success');
+                        showNotification(val.message, 'success');
                     });
                 } else {
-                    pushNotification('Failed to execute request', 'error');
+                    showNotification('Failed to execute request', 'error');
                 }
             },
             error: function (xhr, status, error) {
-                pushNotification('AJAX request failed: ' + error, 'error');
+                showNotification('AJAX request failed: ' + error, 'error');
             }
         });
     });
+
+
 
 
     const view_all = $('#view-all-notifications');
@@ -190,7 +194,7 @@ jQuery(document).ready(function ($) {
         // Mark all notifications as read in the UI
         $notificationList.find('div').each(function () {
             $(this).find('div:first').removeClass('text-gray-800 font-bold').addClass('text-gray-500');
-            $(this).find('div.absolute').remove(); // Remove the blue dot
+            $(this).find('div.absolute').remove();
         });
 
         // Hide the red dot on the bell icon
@@ -212,7 +216,7 @@ jQuery(document).ready(function ($) {
         }, function (response) {
             if (response.success) {
                 response.data.forEach(function (notif) {
-                    addNotification(notif.message, notif.type, notif.time, notif.status);
+                    addNotification(notif.message, notif.type, notif.time, notif.admin_status);
                 });
             }
         });
