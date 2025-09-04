@@ -21,7 +21,8 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
 
                 case_id VARCHAR(100) NOT NULL,
                 case_status VARCHAR(100) DEFAULT 'pending',
-                assigned_to VARCHAR(100) NOT NULL,
+                assigned_to VARCHAR(100) DEFAULT 'N/A'
+
 
                 package_type VARCHAR(100) NOT NULL,
                 package_price VARCHAR(100) NOT NULL,
@@ -204,13 +205,13 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
     if (current_user_can('manage_options')) {
         $notifications = $wpdb->get_results(
-            "SELECT * FROM $table_name ORDER BY time DESC",
+            "SELECT * FROM $table_name ORDER BY time ASC",
             ARRAY_A
         );
     } else {
         $notifications = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time DESC",
+                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time ASC",
                 $user_id
             ),
             ARRAY_A
@@ -267,6 +268,16 @@ function pixelcode_submit_form() {
 
     global $wpdb;
 
+    $current_user = wp_get_current_user();
+
+    if ($current_user->ID != 0) { 
+        $user_id    = $current_user->ID;
+        $user_name  = $current_user->display_name;
+        $user_email = $current_user->user_email; 
+    } else {
+        echo 'No user is logged in.';
+    }
+
     // Generate unique case_id
     $case_id = 'CASE-' . time() . '-' . wp_rand(1000, 9999);
     
@@ -276,6 +287,9 @@ function pixelcode_submit_form() {
         "{$wpdb->prefix}pixelcode_cases",
         [
             'case_id' => $case_id,
+            'user_id' => $user_id,
+            'user_name' => $user_name,
+            'user_email' => $user_email,
             'first_name' => sanitize_text_field($_POST['first_name']),
             'last_name' => sanitize_text_field($_POST['last_name']),
             'email' => sanitize_email($_POST['email']),
@@ -382,51 +396,6 @@ function pixelcode_submit_form() {
 
     wp_send_json_success(['message' => 'Case submitted successfully!', 'case_id' => $case_id, 'case_data' => $_POST]);
 }
-
-
-// ================ case status  funcation are all here=====================
-
-// Handle AJAX request to update case status
-add_action('wp_ajax_update_case_status', 'update_case_status');
-add_action('wp_ajax_nopriv_update_case_status', 'update_case_status');
-
-function update_case_status() {
-    // Check the nonce for security
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'pixelcode_client_nonce')) {
-        wp_send_json_error(['message' => 'Invalid nonce.']);
-    }
-
-    // Get the case ID and status from the request
-    $case_id = sanitize_text_field($_POST['case_id']);
-    $status = sanitize_text_field($_POST['status']);
-
-    // Validate case_id and status
-    if (empty($case_id) || empty($status)) {
-        wp_send_json_error(['message' => 'Case ID or status is missing.']);
-    }
-
-    // Update the case status in the database
-    global $wpdb;
-
-    $result = $wpdb->update(
-        "{$wpdb->prefix}pixelcode_cases", 
-        ['case_status' => $status], // New status
-        ['case_id' => $case_id], // Where condition (case_id)
-        ['%s'], // Format for status
-        ['%s'] // Format for case_id
-    );
-
-    // Check if the status was updated
-    if ($result !== false) {
-        wp_send_json_success(['message' => 'Status updated successfully!']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to update status.']);
-    }
-}
-
-
-
-// ================ TEXT DB Funcation code ======
 
 function pixelcode_get_case() {
     global $wpdb;

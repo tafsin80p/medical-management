@@ -1,5 +1,4 @@
 jQuery(document).ready(function ($) {
-
   // ---------------------------- Notification Function ----------------------------
   function showNotification(message, type = 'success') {
     const cleanedMessage = message.replace(/[ _?\/]/g, " ");
@@ -89,7 +88,7 @@ jQuery(document).ready(function ($) {
 
     // 2️⃣ Hide the red dot on the bell icon
     $clientNotificationDot.addClass('hidden');
-    
+
     $.post(ajax_object.ajax_url, {
       action: 'mark_all_notifications_read',
     })
@@ -119,7 +118,6 @@ jQuery(document).ready(function ($) {
   // ---------------------------- Tabs ----------------------------
   $(".tab-button").on("click", function () {
     let target = $(this).data("tab");
-
     $(".tab-panel").addClass("hidden");
     $(".tab-button").removeClass("border-blue-600 text-blue-600");
 
@@ -127,8 +125,6 @@ jQuery(document).ready(function ($) {
     $(this).addClass("border-blue-600 text-blue-600");
   });
   $(".tab-button").first().click();
-
-
 
 
 
@@ -154,6 +150,7 @@ jQuery(document).ready(function ($) {
   $("#add-form-button").on("click", function () {
     $("#case-form-container").toggleClass("hidden");
   });
+
   $("#case-form-container").on("click", function (e) {
     if (e.target === this) {
       $(this).addClass("hidden");
@@ -289,6 +286,279 @@ jQuery(document).ready(function ($) {
 
 
 
+  // ---------------------------- Cases Table ----------------------------
+  function loadCases() {
+    const tbody = $('#case-table-body');
+    tbody.html(`
+      <tr>
+        <td colspan="6" class="px-6 py-4 text-center">
+          <div class="flex justify-center items-center space-x-2">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span class="text-gray-600">Loading cases...</span>
+          </div>
+        </td>
+      </tr>
+    `);
+
+    $.post(ajax_object.ajax_url, { action: 'pixelcode_get_cases' }, function (response) {
+      if (response.success) {
+        const cases = response.data.cases;
+        tbody.empty();
+
+        if (!cases || cases.length === 0) {
+          tbody.html('<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No cases found</td></tr>');
+          return;
+        }
+
+        cases.forEach(c => {
+          const row = `
+        <tr id="${c.case_id}" class="bg-white border-b hover:bg-gray-50">
+          <!-- Case Info -->
+          <td class="px-6 py-4 w-1/3">
+            <div class="flex items-start">
+              <div>
+                <div class="text-md font-medium text-gray-900">
+                  MD NEXUSPROS CASES - ${c.first_name ?? 'N/A'} ${c.last_name ?? 'N/A'}
+                </div>
+                <div class="text-sm text-gray-400">
+                  <p>Case ID: <span class="text-gray-500 font-medium">${c.case_id ?? 'N/A'}</span></p>
+                </div>
+              </div>
+              <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                ${c.priority === 'High' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}">
+                ${c.priority && c.priority !== '' ? c.priority : 'N/A'}
+              </span>
+            </div>
+          </td>
+
+          <!-- Case Status -->
+          <td class="px-6 py-4 w-1/6">
+            <span class="status-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              ${c.case_status ?? 'N/A'}
+            </span>
+          </td>
+
+          <!-- Assigned To -->
+          <td class="px-6 py-4 w-1/6">
+            <span class="assigned-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              ${c.assigned_to ?? 'N/A'}
+            </span>
+          </td>
+
+          <!-- Progress -->
+          <td class="px-6 py-4 w-1/6">
+            <div class="flex items-center">
+              <div class="bg-gray-200 rounded-full h-2 mr-3 w-4/12">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: ${c.progress ?? 100}%;"></div>
+              </div>
+              <span class="text-sm text-gray-600">${c.progress ?? 100}%</span>
+            </div>
+          </td>
+
+          <!-- Created At -->
+          <td class="px-6 py-4 text-sm text-gray-900 w-1/6">
+            ${c.created_at ?? 'N/A'}
+          </td>
+
+          <!-- Actions -->
+          <td class="px-6 py-4 text-sm font-medium space-x-4 w-1/6 text-center">
+            <button 
+              class="text-blue-600 hover:text-blue-900 client_view_btn" 
+              data-case-id="${c.case_id}">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+        `;
+
+          tbody.append(row);
+        });
+
+      } else {
+        tbody.html('<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading cases</td></tr>');
+      }
+    });
+  }
+
+
+
+
+
+  // Function to open modal and load case details
+  function openCaseModal(caseId) {
+    const modal = document.getElementById('caseModal');
+    const content = document.getElementById('modalContent');
+
+    // Show modal
+    modal.classList.remove('hidden');
+    content.innerHTML = `
+        <div class="flex justify-center items-center h-32">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+    `;
+
+    // Fetch case details via AJAX
+    $.post(ajax_object.ajax_url, {
+      action: 'pixelcode_get_case',
+      case_id: caseId
+    }, function (response) {
+      if (response.success) {
+        const c = response.data.case;
+        // Generate HTML dynamically
+        const html = `<div class="space-y-5 text-sm text-gray-700">
+            <!-- Case Header -->
+            <div class="border-b border-gray-200 pb-3 flex justify-between items-center">
+                <div>
+                    <h1 class="font-normal text-gray-500 inline">CASE ID:</h1>
+                    <span class="font-medium text-gray-800">${c.case_id}</span>
+                    <p class="mt-1 font-normal text-gray-500">Created: <span class="font-medium text-gray-800">${new Date(c.created_at).toLocaleString()}</span></p>
+                </div>
+                <div class="space-x-2 flex">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.case_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">${c.case_status}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.payment_status === 'pending' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${c.payment_status.toLowerCase() === 'pending' ? 'Unpaid' : 'Paid'}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${c.assigned_to && c.assigned_to.trim() !== '' ? c.assigned_to : 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+
+                <!-- Personal Information -->
+                <div class="bg-gray-50 p-3 rounded-md space-y-2">
+                    <h3 class="font-semibold text-gray-800">Personal Information</h3>
+                    <p><span class="font-normal text-gray-500">Name:</span> <span class="font-medium text-gray-800">${c.first_name} ${c.last_name}</span></p>
+                    <p><span class="font-normal text-gray-500">Email:</span> <span class="font-medium text-gray-800">${c.email}</span></p>
+                    <p><span class="font-normal text-gray-500">Phone:</span> <span class="font-medium text-gray-800">${c.phone}</span></p>
+                    <p><span class="font-normal text-gray-500">Birth Date:</span> <span class="font-medium text-gray-800">${c.birth_date}</span></p>
+                    <p><span class="font-normal text-gray-500">Address:</span> <span class="font-medium text-gray-800">${c.address}, ${c.city}, ${c.state} ${c.zip}</span></p>
+                    <p><span class="font-normal text-gray-500">VA File Number:</span> <span class="font-medium text-gray-800">${c.va_file_number}</span></p>
+                </div>
+
+                <!-- Package & Payment -->
+                <div class="bg-gray-50 p-3 rounded-md space-y-2">
+                    <h3 class="font-semibold text-gray-800">Package & Payment</h3>
+                    <p><span class="font-normal text-gray-500">Package Type:</span> <span class="font-medium text-gray-800">${c.package_type || 'N/A'}</span></p>
+                    <p><span class="font-normal text-gray-500">Package Price:</span> <span class="font-medium text-gray-800">${c.package_price || 'N/A'}</span></p>
+                    <p><span class="font-normal text-gray-500">Payment Amount:</span> <span class="font-medium text-gray-800">${c.payment_amount || 'N/A'}</span></p>
+                    <p><span class="font-normal text-gray-500">Payment Date:</span> <span class="font-medium text-gray-800">${c.payment_date || 'N/A'}</span></p>
+                    <p><span class="font-normal text-gray-500">Payment Method:</span> <span class="font-medium text-gray-800">${c.payment_method || 'N/A'}</span></p>
+                </div>
+            </div>
+
+            <!-- Service History -->
+            <div class="bg-gray-50 p-3 rounded-md space-y-2">
+                <h3 class="font-semibold text-gray-800">Service History</h3>
+                ${c.service_history.length > 0 ? c.service_history.map(sh => `
+                    <div class="p-2 border border-gray-200 rounded-md space-y-1">
+                        <p><span class="font-normal text-gray-500">Branch:</span> <span class="font-medium text-gray-800">${sh.branch_of_service}</span></p>
+                        <p><span class="font-normal text-gray-500">Composition:</span> <span class="font-medium text-gray-800">${sh.service_composition}</span></p>
+                        <p><span class="font-normal text-gray-500">MOS/AOC Rate:</span> <span class="font-medium text-gray-800">${sh.mos_aoc_rate || 'N/A'}</span></p>
+                        <p><span class="font-normal text-gray-500">Duty Position:</span> <span class="font-medium text-gray-800">${sh.duty_position || 'N/A'}</span></p>
+                    </div>
+                `).join('') : '<p class="text-gray-500">No service history</p>'}
+            </div>
+
+            <!-- VA Claims -->
+            <div class="bg-gray-50 p-3 rounded-md space-y-2">
+                <h3 class="font-semibold text-gray-800">VA Claims</h3>
+                ${c.va_claims.length > 0 ? c.va_claims.map(vc => `
+                    <div class="p-2 border border-gray-200 rounded-md space-y-1">
+                        <p><span class="font-normal text-gray-500">Condition:</span> <span class="font-medium text-gray-800">${vc.condition}</span></p>
+                        <p><span class="font-normal text-gray-500">Claim Type:</span> <span class="font-medium text-gray-800">${vc.claim_type}</span></p>
+                        <p><span class="font-normal text-gray-500">Primary Event:</span> <span class="font-medium text-gray-800">${vc.primary_event || 'N/A'}</span></p>
+                        <p><span class="font-normal text-gray-500">Service Explanation:</span> <span class="font-medium text-gray-800">${vc.service_explanation || 'N/A'}</span></p>
+                        <p><span class="font-normal text-gray-500">MTF Seen:</span> <span class="font-medium text-gray-800">${vc.mtf_seen === '1' ? 'Yes' : 'No'}</span></p>
+                        <p><span class="font-normal text-gray-500">Current Treatment:</span> <span class="font-medium text-gray-800">${vc.current_treatment || 'N/A'}</span></p>
+                    </div>
+                `).join('') : '<p class="text-gray-500">No VA claims</p>'}
+            </div>
+
+            <!-- Documents -->
+            <div class="bg-gray-50 p-3 rounded-md space-y-2">
+                <h3 class="font-semibold text-gray-800">Documents</h3>
+                ${c.documents.length > 0 ? c.documents.map(doc => `
+                    <div class="flex justify-between items-center p-2 border border-gray-200 rounded-md">
+                        <p><span class="font-normal text-gray-500">${doc.document_type}:</span> <span class="font-medium text-gray-800">${doc.file_path.split('/').pop()}</span></p>
+                        <div class="space-x-2">
+                            <a href="${window.location.origin + doc.file_path}" target="_blank" class="text-blue-600 hover:underline text-xs">View</a>
+                            <a href="${window.location.origin + doc.file_path}" download class="text-green-600 hover:underline text-xs">Download</a>
+                        </div>
+                    </div>
+                `).join('') : '<p class="text-gray-500">No documents uploaded</p>'}
+            </div>
+
+            <!-- Consent -->
+            <div class="bg-gray-50 p-3 rounded-md space-y-1">
+                <h3 class="font-semibold text-gray-800">Consent</h3>
+                <p><span class="font-normal text-gray-500">Data Collection:</span> <span class="font-medium text-gray-800">${c.consent_data_collection === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+                <p><span class="font-normal text-gray-500">Privacy Policy:</span> <span class="font-medium text-gray-800">${c.consent_privacy_policy === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+                <p><span class="font-normal text-gray-500">Communication:</span> <span class="font-medium text-gray-800">${c.consent_communication === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+            </div>
+
+        </div>
+        `;
+
+        content.innerHTML = html;
+      } else {
+        content.innerHTML = `
+                <div class="text-center text-red-500 p-8">
+                    <i class="fa-solid fa-exclamation-triangle text-4xl mb-4"></i>
+                    <p class="text-lg font-semibold">Error loading case details</p>
+                </div>
+            `;
+      }
+    });
+  }
+
+  // Event delegation for dynamically created buttons
+  $(document).on('click', '.client_view_btn', function () {
+    const caseId = $(this).data('case-id');
+    if (caseId) openCaseModal(caseId);
+  });
+
+  // Close modal functionality
+  $('#closeCaseModal').on('click', function () {
+    $('#caseModal').addClass('hidden');
+    $('#modalContent').html('');
+  });
+
+  // Close modal by clicking outside modal content
+  $('#caseModal').on('click', function (e) {
+    if ($(e.target).is('#caseModal')) {
+      $(this).addClass('hidden');
+      $('#modalContent').html('');
+    }
+  });
+
+
+
+
+
+
+
+// Search only by Case ID
+$('#case-search').on('keyup', function () {
+  const searchValue = $(this).val().toLowerCase().trim(); 
+  $('#case-table-body tr').filter(function () {
+    const caseId = $(this).find('td:first').text().toLowerCase().trim(); 
+    $(this).toggle(caseId.indexOf(searchValue) > -1);
+  });
+});
+
+
+
+
+  
+
+
+
+
+
+
+
+
 
 
 
@@ -329,6 +599,7 @@ jQuery(document).ready(function ($) {
     });
   }
 
-  loadNotifications();
 
+  loadNotifications();
+  loadCases();
 });

@@ -13,6 +13,7 @@ function pixelcode_client_dashboard_shortcode() {
         <?php include(PIXELCODE_PLUGIN_DIR . 'templates/public/overview.php'); ?>
         <?php include(PIXELCODE_PLUGIN_DIR . 'templates/public/caseslists.php'); ?>
         <?php include(PIXELCODE_PLUGIN_DIR . 'templates/public/case-form.php'); ?>
+        <?php include(PIXELCODE_PLUGIN_DIR) . 'templates/public/case-detail-model.php';?>
     </div>
     <?php
     return ob_get_clean();
