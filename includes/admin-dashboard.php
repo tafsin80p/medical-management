@@ -22,4 +22,5 @@ function pixelcode_admin_dashboard_page() {
     // Include the template file for the admin dashboard
     include(plugin_dir_path(__FILE__) . '../templates/admin/overview.php');
     include(plugin_dir_path(__FILE__) . '../templates/admin/caseslists.php');
+    include(plugin_dir_path(__FILE__) . '../templates/admin/case-detail-model.php');
 }

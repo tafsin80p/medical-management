@@ -21,10 +21,11 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
 
                 case_id VARCHAR(100) NOT NULL,
                 case_status VARCHAR(100) DEFAULT 'pending',
+                assigned_to VARCHAR(100) NOT NULL,
 
                 package_type VARCHAR(100) NOT NULL,
                 package_price VARCHAR(100) NOT NULL,
-                priority VARCHAR(100) NOT NULL,
+                priority VARCHAR(100) DEFAULT 'N/A',
 
                 payment_status VARCHAR(100) DEFAULT 'pending',
                 payment_date DATE DEFAULT NULL,
@@ -162,8 +163,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
     wp_send_json_success($results);
 });
 
-
-
 // --------------------------- AJAX: Dashboard Notifications ---------------------------
 add_action('wp_ajax_add_dashboard_notification', function() {
     if ( ! is_user_logged_in() ) {
@@ -220,8 +219,6 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
     wp_send_json_success($notifications);
 });
-
-
 
 
 // --------------------------- AJAX: Mark All Notifications Read ---------------------------
@@ -385,3 +382,106 @@ function pixelcode_submit_form() {
 
     wp_send_json_success(['message' => 'Case submitted successfully!', 'case_id' => $case_id, 'case_data' => $_POST]);
 }
+
+
+// ================ case status  funcation are all here=====================
+
+// Handle AJAX request to update case status
+add_action('wp_ajax_update_case_status', 'update_case_status');
+add_action('wp_ajax_nopriv_update_case_status', 'update_case_status');
+
+function update_case_status() {
+    // Check the nonce for security
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'pixelcode_client_nonce')) {
+        wp_send_json_error(['message' => 'Invalid nonce.']);
+    }
+
+    // Get the case ID and status from the request
+    $case_id = sanitize_text_field($_POST['case_id']);
+    $status = sanitize_text_field($_POST['status']);
+
+    // Validate case_id and status
+    if (empty($case_id) || empty($status)) {
+        wp_send_json_error(['message' => 'Case ID or status is missing.']);
+    }
+
+    // Update the case status in the database
+    global $wpdb;
+
+    $result = $wpdb->update(
+        "{$wpdb->prefix}pixelcode_cases", 
+        ['case_status' => $status], // New status
+        ['case_id' => $case_id], // Where condition (case_id)
+        ['%s'], // Format for status
+        ['%s'] // Format for case_id
+    );
+
+    // Check if the status was updated
+    if ($result !== false) {
+        wp_send_json_success(['message' => 'Status updated successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to update status.']);
+    }
+}
+
+
+
+// ================ TEXT DB Funcation code ======
+
+function pixelcode_get_case() {
+    global $wpdb;
+
+    $case_id = sanitize_text_field($_POST['case_id'] ?? '');
+    if (!$case_id) {
+        wp_send_json_error('Case ID missing');
+    }
+
+    $cases_table = $wpdb->prefix . 'pixelcode_cases';
+    $service_table = $wpdb->prefix . 'pixelcode_cases_service_history';
+    $deployments_table = $wpdb->prefix . 'pixelcode_cases_deployments';
+    $documents_table = $wpdb->prefix . 'pixelcode_cases_case_documents';
+    $va_claims_table = $wpdb->prefix . 'pixelcode_cases_va_claims';
+
+    // Get main case
+    $case = $wpdb->get_row($wpdb->prepare("SELECT * FROM $cases_table WHERE case_id=%s", $case_id), ARRAY_A);
+
+    if (!$case) {
+        wp_send_json_error('Case not found');
+    }
+
+    // Get service history
+    $service_history = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $service_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Get deployments for each service history
+    foreach ($service_history as &$service) {
+        $service['deployments'] = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $deployments_table WHERE service_history_id=%d",
+            $service['id']
+        ), ARRAY_A);
+    }
+
+    // Get case documents
+    $documents = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $documents_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Get VA claims
+    $va_claims = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $va_claims_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Merge all related data
+    $case['service_history'] = $service_history;
+    $case['documents'] = $documents;
+    $case['va_claims'] = $va_claims;
+
+    wp_send_json_success(['case' => $case]);
+}
+
+add_action('wp_ajax_pixelcode_get_case', 'pixelcode_get_case');
+add_action('wp_ajax_nopriv_pixelcode_get_case', 'pixelcode_get_case');
