@@ -21,6 +21,7 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
 
                 case_id VARCHAR(100) NOT NULL,
                 case_status VARCHAR(100) DEFAULT 'pending',
+                assigned_to VARCHAR(100) DEFAULT 'N/A'
 
                 package_type VARCHAR(100) NOT NULL,
                 package_price VARCHAR(100) NOT NULL,
@@ -205,13 +206,13 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
     if (current_user_can('manage_options')) {
         $notifications = $wpdb->get_results(
-            "SELECT * FROM $table_name ORDER BY time DESC",
+            "SELECT * FROM $table_name ORDER BY time ASC",
             ARRAY_A
         );
     } else {
         $notifications = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time DESC",
+                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time ASC",
                 $user_id
             ),
             ARRAY_A
@@ -270,6 +271,16 @@ function pixelcode_submit_form() {
 
     global $wpdb;
 
+    $current_user = wp_get_current_user();
+
+    if ($current_user->ID != 0) { 
+        $user_id    = $current_user->ID;
+        $user_name  = $current_user->display_name;
+        $user_email = $current_user->user_email; 
+    } else {
+        echo 'No user is logged in.';
+    }
+
     // Generate unique case_id
     $case_id = 'CASE-' . time() . '-' . wp_rand(1000, 9999);
     
@@ -279,6 +290,9 @@ function pixelcode_submit_form() {
         "{$wpdb->prefix}pixelcode_cases",
         [
             'case_id' => $case_id,
+            'user_id' => $user_id,
+            'user_name' => $user_name,
+            'user_email' => $user_email,
             'first_name' => sanitize_text_field($_POST['first_name']),
             'last_name' => sanitize_text_field($_POST['last_name']),
             'email' => sanitize_email($_POST['email']),
@@ -385,3 +399,162 @@ function pixelcode_submit_form() {
 
     wp_send_json_success(['message' => 'Case submitted successfully!', 'case_id' => $case_id, 'case_data' => $_POST]);
 }
+
+
+
+// --------------------------- AJAX: Get Client Cases ---------------------------
+add_action('wp_ajax_pixelcode_get_cases', 'pixelcode_get_cases');
+add_action('wp_ajax_nopriv_pixelcode_get_cases', 'pixelcode_get_cases'); 
+
+function pixelcode_get_cases() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+        return;
+    }
+
+    global $wpdb;
+    $user_id = get_current_user_id();
+
+    $cases_table       = $wpdb->prefix . 'pixelcode_cases';
+    $history_table     = $wpdb->prefix . 'pixelcode_cases_service_history';
+    $deployments_table = $wpdb->prefix . 'pixelcode_cases_deployments';
+    $claims_table      = $wpdb->prefix . 'pixelcode_cases_va_claims';
+    $documents_table   = $wpdb->prefix . 'pixelcode_cases_case_documents';
+
+    // ------------------- Fetch main cases for current user -------------------
+    $cases = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $cases_table WHERE user_id = %d ORDER BY created_at DESC",
+        $user_id
+    ));
+
+    if (empty($cases)) {
+        wp_send_json_success(['cases' => []]);
+        return;
+    }
+
+    // ------------------- Fetch related data in one go -------------------
+    $case_ids = wp_list_pluck($cases, 'case_id');
+
+    $service_history = $wpdb->get_results(
+        "SELECT * FROM $history_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
+    );
+
+    $history_ids = wp_list_pluck($service_history, 'id');
+
+    $deployments = $wpdb->get_results(
+        "SELECT * FROM $deployments_table WHERE service_history_id IN (" . implode(',', $history_ids) . ")"
+    );
+
+    $claims = $wpdb->get_results(
+        "SELECT * FROM $claims_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
+    );
+
+    $documents = $wpdb->get_results(
+        "SELECT * FROM $documents_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
+    );
+
+    // ------------------- Build nested structure -------------------
+    $service_map = [];
+    foreach ($service_history as $sh) {
+        $sh->deployments = [];
+        $service_map[$sh->id] = $sh;
+    }
+
+    foreach ($deployments as $d) {
+        if (isset($service_map[$d->service_history_id])) {
+            $service_map[$d->service_history_id]->deployments[] = $d;
+        }
+    }
+
+    $case_map = [];
+    foreach ($cases as $case) {
+        $case->service_history = [];
+        $case->claims = [];
+        $case->documents = [];
+        $case_map[$case->case_id] = $case;
+    }
+
+    foreach ($service_history as $sh) {
+        if (isset($case_map[$sh->case_id])) {
+            $case_map[$sh->case_id]->service_history[] = $sh;
+        }
+    }
+
+    foreach ($claims as $c) {
+        if (isset($case_map[$c->case_id])) {
+            $case_map[$c->case_id]->claims[] = $c;
+        }
+    }
+
+    foreach ($documents as $doc) {
+        if (isset($case_map[$doc->case_id])) {
+            $case_map[$doc->case_id]->documents[] = $doc;
+        }
+    }
+
+    wp_send_json_success([
+        'cases' => array_values($case_map)
+    ]);
+}
+
+
+
+function pixelcode_get_case() {
+    global $wpdb;
+
+    $case_id = sanitize_text_field($_POST['case_id'] ?? '');
+    if (!$case_id) {
+        wp_send_json_error('Case ID missing');
+    }
+
+    $cases_table = $wpdb->prefix . 'pixelcode_cases';
+    $service_table = $wpdb->prefix . 'pixelcode_cases_service_history';
+    $deployments_table = $wpdb->prefix . 'pixelcode_cases_deployments';
+    $documents_table = $wpdb->prefix . 'pixelcode_cases_case_documents';
+    $va_claims_table = $wpdb->prefix . 'pixelcode_cases_va_claims';
+
+    // Get main case
+    $case = $wpdb->get_row($wpdb->prepare("SELECT * FROM $cases_table WHERE case_id=%s", $case_id), ARRAY_A);
+
+    if (!$case) {
+        wp_send_json_error('Case not found');
+    }
+
+    // Get service history
+    $service_history = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $service_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Get deployments for each service history
+    foreach ($service_history as &$service) {
+        $service['deployments'] = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $deployments_table WHERE service_history_id=%d",
+            $service['id']
+        ), ARRAY_A);
+    }
+
+    // Get case documents
+    $documents = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $documents_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Get VA claims
+    $va_claims = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $va_claims_table WHERE case_id=%s",
+        $case_id
+    ), ARRAY_A);
+
+    // Merge all related data
+    $case['service_history'] = $service_history;
+    $case['documents'] = $documents;
+    $case['va_claims'] = $va_claims;
+
+    wp_send_json_success(['case' => $case]);
+}
+
+add_action('wp_ajax_pixelcode_get_case', 'pixelcode_get_case');
+add_action('wp_ajax_nopriv_pixelcode_get_case', 'pixelcode_get_case');
+
+
