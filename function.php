@@ -23,9 +23,10 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 case_status VARCHAR(100) DEFAULT 'pending',
                 assigned_to VARCHAR(100) DEFAULT 'N/A'
 
+
                 package_type VARCHAR(100) NOT NULL,
                 package_price VARCHAR(100) NOT NULL,
-                priority VARCHAR(100) NOT NULL,
+                priority VARCHAR(100) DEFAULT 'N/A',
 
                 payment_status VARCHAR(100) DEFAULT 'pending',
                 payment_date DATE DEFAULT NULL,
@@ -163,8 +164,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
     wp_send_json_success($results);
 });
 
-
-
 // --------------------------- AJAX: Dashboard Notifications ---------------------------
 add_action('wp_ajax_add_dashboard_notification', function() {
     if ( ! is_user_logged_in() ) {
@@ -221,8 +220,6 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
     wp_send_json_success($notifications);
 });
-
-
 
 
 // --------------------------- AJAX: Mark All Notifications Read ---------------------------
@@ -400,105 +397,6 @@ function pixelcode_submit_form() {
     wp_send_json_success(['message' => 'Case submitted successfully!', 'case_id' => $case_id, 'case_data' => $_POST]);
 }
 
-
-
-// --------------------------- AJAX: Get Client Cases ---------------------------
-add_action('wp_ajax_pixelcode_get_cases', 'pixelcode_get_cases');
-add_action('wp_ajax_nopriv_pixelcode_get_cases', 'pixelcode_get_cases'); 
-
-function pixelcode_get_cases() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('User not logged in');
-        return;
-    }
-
-    global $wpdb;
-    $user_id = get_current_user_id();
-
-    $cases_table       = $wpdb->prefix . 'pixelcode_cases';
-    $history_table     = $wpdb->prefix . 'pixelcode_cases_service_history';
-    $deployments_table = $wpdb->prefix . 'pixelcode_cases_deployments';
-    $claims_table      = $wpdb->prefix . 'pixelcode_cases_va_claims';
-    $documents_table   = $wpdb->prefix . 'pixelcode_cases_case_documents';
-
-    // ------------------- Fetch main cases for current user -------------------
-    $cases = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM $cases_table WHERE user_id = %d ORDER BY created_at DESC",
-        $user_id
-    ));
-
-    if (empty($cases)) {
-        wp_send_json_success(['cases' => []]);
-        return;
-    }
-
-    // ------------------- Fetch related data in one go -------------------
-    $case_ids = wp_list_pluck($cases, 'case_id');
-
-    $service_history = $wpdb->get_results(
-        "SELECT * FROM $history_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
-    );
-
-    $history_ids = wp_list_pluck($service_history, 'id');
-
-    $deployments = $wpdb->get_results(
-        "SELECT * FROM $deployments_table WHERE service_history_id IN (" . implode(',', $history_ids) . ")"
-    );
-
-    $claims = $wpdb->get_results(
-        "SELECT * FROM $claims_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
-    );
-
-    $documents = $wpdb->get_results(
-        "SELECT * FROM $documents_table WHERE case_id IN ('" . implode("','", $case_ids) . "')"
-    );
-
-    // ------------------- Build nested structure -------------------
-    $service_map = [];
-    foreach ($service_history as $sh) {
-        $sh->deployments = [];
-        $service_map[$sh->id] = $sh;
-    }
-
-    foreach ($deployments as $d) {
-        if (isset($service_map[$d->service_history_id])) {
-            $service_map[$d->service_history_id]->deployments[] = $d;
-        }
-    }
-
-    $case_map = [];
-    foreach ($cases as $case) {
-        $case->service_history = [];
-        $case->claims = [];
-        $case->documents = [];
-        $case_map[$case->case_id] = $case;
-    }
-
-    foreach ($service_history as $sh) {
-        if (isset($case_map[$sh->case_id])) {
-            $case_map[$sh->case_id]->service_history[] = $sh;
-        }
-    }
-
-    foreach ($claims as $c) {
-        if (isset($case_map[$c->case_id])) {
-            $case_map[$c->case_id]->claims[] = $c;
-        }
-    }
-
-    foreach ($documents as $doc) {
-        if (isset($case_map[$doc->case_id])) {
-            $case_map[$doc->case_id]->documents[] = $doc;
-        }
-    }
-
-    wp_send_json_success([
-        'cases' => array_values($case_map)
-    ]);
-}
-
-
-
 function pixelcode_get_case() {
     global $wpdb;
 
@@ -556,5 +454,3 @@ function pixelcode_get_case() {
 
 add_action('wp_ajax_pixelcode_get_case', 'pixelcode_get_case');
 add_action('wp_ajax_nopriv_pixelcode_get_case', 'pixelcode_get_case');
-
-

@@ -224,3 +224,215 @@ jQuery(document).ready(function ($) {
 
     loadNotifications();
 });
+
+
+// --------- tab status code in dashboard----------------------------
+
+jQuery(document).ready(function($) {
+    // Function to toggle visibility between current status text and status dropdown
+    window.toggleEditStatus = function(caseId) {        
+        // Get the dropdown and current status text for the specific case
+        const statusDropdown = $('#status-dropdown-' + caseId);        
+        const currentStatusText = $('#current-status-' + caseId);
+        
+
+        // Toggle visibility: show dropdown, hide current status text
+        statusDropdown.toggleClass('hidden');
+        currentStatusText.toggleClass('hidden');
+    };
+
+    // Function to update the status in the database via AJAX
+    window.updateStatus = function(selectElement, caseId) {
+        const status = selectElement.value;
+
+        // Prepare AJAX data
+        const data = {
+            action: 'update_case_status',  // WordPress action hook
+            case_id: caseId,               // Case ID
+            status: status,                // New status selected
+            nonce: ajax_object.nonce       // Nonce for security
+        };
+
+        // Perform the AJAX request
+        // $.post(ajax_object.ajax_url, data, function(response) {
+            // if (response.success) {
+                // Update the status text on success
+                // $('#current-status-' + caseId).text(status);  // Update the status text dynamically
+                // alert('Status updated successfully!');
+            // } else {
+                // alert('Failed to update status.');
+            // }
+        // });
+    };
+
+    // Attach the updateStatus function to the status dropdown change event
+    $('select[id^="status-dropdown-"]').on('change', function() {
+        const caseId = $(this).attr('id').split('-')[2];  // Extract case_id from dropdown ID
+        updateStatus(this, caseId);
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+jQuery(document).ready(function($) {
+
+    // ================ TEXT DB js code ======
+
+  // Function to open modal and load case details
+function openCaseDetailsModal(caseId) {
+    const modal = document.getElementById('caseDetailsModal');
+    const content = document.getElementById('caseDetailsModalContent');
+
+    // Show modal
+    modal.classList.remove('hidden');
+    content.innerHTML = `
+        <div class="flex justify-center items-center h-32">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+    `;
+
+    // Fetch case details via AJAX
+    $.post(ajax_object.ajax_url, {
+        action: 'pixelcode_get_case',
+        case_id: caseId
+    }, function (response) {
+        if (response.success) {
+            const c = response.data.case;            
+
+            // Generate HTML dynamically
+            const html = `<div class="space-y-5 text-sm text-gray-700">
+
+    <!-- Case Header -->
+    <div class="border-b border-gray-200 pb-3 flex justify-between items-center">
+        <div>
+            <h1 class="font-normal text-gray-500 inline">CASE ID:</h1>
+            <span class="font-medium text-gray-800">${c.case_id}</span>
+            <p class="mt-1 font-normal text-gray-500">Created: <span class="font-medium text-gray-800">${new Date(c.created_at).toLocaleString()}</span></p>
+        </div>
+        <div class="space-x-2 flex">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.case_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">${c.case_status}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.payment_status === 'pending' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${c.payment_status.toLowerCase() === 'pending' ? 'Unpaid' : 'Paid'}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${c.assigned_to && c.assigned_to.trim() !== '' ? c.assigned_to : 'N/A'}</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+
+        <!-- Personal Information -->
+        <div class="bg-gray-50 p-3 rounded-md space-y-2">
+            <h3 class="font-semibold text-gray-800">Personal Information</h3>
+            <p><span class="font-normal text-gray-500">Name:</span> <span class="font-medium text-gray-800">${c.first_name} ${c.last_name}</span></p>
+            <p><span class="font-normal text-gray-500">Email:</span> <span class="font-medium text-gray-800">${c.email}</span></p>
+            <p><span class="font-normal text-gray-500">Phone:</span> <span class="font-medium text-gray-800">${c.phone}</span></p>
+            <p><span class="font-normal text-gray-500">Birth Date:</span> <span class="font-medium text-gray-800">${c.birth_date}</span></p>
+            <p><span class="font-normal text-gray-500">Address:</span> <span class="font-medium text-gray-800">${c.address}, ${c.city}, ${c.state} ${c.zip}</span></p>
+            <p><span class="font-normal text-gray-500">VA File Number:</span> <span class="font-medium text-gray-800">${c.va_file_number}</span></p>
+        </div>
+
+        <!-- Package & Payment -->
+        <div class="bg-gray-50 p-3 rounded-md space-y-2">
+            <h3 class="font-semibold text-gray-800">Package & Payment</h3>
+            <p><span class="font-normal text-gray-500">Package Type:</span> <span class="font-medium text-gray-800">${c.package_type || 'N/A'}</span></p>
+            <p><span class="font-normal text-gray-500">Package Price:</span> <span class="font-medium text-gray-800">${c.package_price || 'N/A'}</span></p>
+            <p><span class="font-normal text-gray-500">Payment Amount:</span> <span class="font-medium text-gray-800">${c.payment_amount || 'N/A'}</span></p>
+            <p><span class="font-normal text-gray-500">Payment Date:</span> <span class="font-medium text-gray-800">${c.payment_date || 'N/A'}</span></p>
+            <p><span class="font-normal text-gray-500">Payment Method:</span> <span class="font-medium text-gray-800">${c.payment_method || 'N/A'}</span></p>
+        </div>
+    </div>
+
+    <!-- Service History -->
+    <div class="bg-gray-50 p-3 rounded-md space-y-2">
+        <h3 class="font-semibold text-gray-800">Service History</h3>
+        ${c.service_history.length > 0 ? c.service_history.map(sh => `
+            <div class="p-2 border border-gray-200 rounded-md space-y-1">
+                <p><span class="font-normal text-gray-500">Branch:</span> <span class="font-medium text-gray-800">${sh.branch_of_service}</span></p>
+                <p><span class="font-normal text-gray-500">Composition:</span> <span class="font-medium text-gray-800">${sh.service_composition}</span></p>
+                <p><span class="font-normal text-gray-500">MOS/AOC Rate:</span> <span class="font-medium text-gray-800">${sh.mos_aoc_rate || 'N/A'}</span></p>
+                <p><span class="font-normal text-gray-500">Duty Position:</span> <span class="font-medium text-gray-800">${sh.duty_position || 'N/A'}</span></p>
+            </div>
+        `).join('') : '<p class="text-gray-500">No service history</p>'}
+    </div>
+
+    <!-- VA Claims -->
+    <div class="bg-gray-50 p-3 rounded-md space-y-2">
+        <h3 class="font-semibold text-gray-800">VA Claims</h3>
+        ${c.va_claims.length > 0 ? c.va_claims.map(vc => `
+            <div class="p-2 border border-gray-200 rounded-md space-y-1">
+                <p><span class="font-normal text-gray-500">Condition:</span> <span class="font-medium text-gray-800">${vc.condition}</span></p>
+                <p><span class="font-normal text-gray-500">Claim Type:</span> <span class="font-medium text-gray-800">${vc.claim_type}</span></p>
+                <p><span class="font-normal text-gray-500">Primary Event:</span> <span class="font-medium text-gray-800">${vc.primary_event || 'N/A'}</span></p>
+                <p><span class="font-normal text-gray-500">Service Explanation:</span> <span class="font-medium text-gray-800">${vc.service_explanation || 'N/A'}</span></p>
+                <p><span class="font-normal text-gray-500">MTF Seen:</span> <span class="font-medium text-gray-800">${vc.mtf_seen === '1' ? 'Yes' : 'No'}</span></p>
+                <p><span class="font-normal text-gray-500">Current Treatment:</span> <span class="font-medium text-gray-800">${vc.current_treatment || 'N/A'}</span></p>
+            </div>
+        `).join('') : '<p class="text-gray-500">No VA claims</p>'}
+    </div>
+
+    <!-- Documents -->
+    <div class="bg-gray-50 p-3 rounded-md space-y-2">
+        <h3 class="font-semibold text-gray-800">Documents</h3>
+        ${c.documents.length > 0 ? c.documents.map(doc => `
+            <div class="flex justify-between items-center p-2 border border-gray-200 rounded-md">
+                <p><span class="font-normal text-gray-500">${doc.document_type}:</span> <span class="font-medium text-gray-800">${doc.file_path.split('/').pop()}</span></p>
+                <div class="space-x-2">
+                    <a href="${doc.file_path}" target="_blank" class="text-blue-600 hover:underline text-xs">View</a>
+                    <a href="${doc.file_path}" download class="text-green-600 hover:underline text-xs">Download</a>
+                </div>
+            </div>
+        `).join('') : '<p class="text-gray-500">No documents uploaded</p>'}
+    </div>
+
+    <!-- Consent -->
+    <div class="bg-gray-50 p-3 rounded-md space-y-1">
+        <h3 class="font-semibold text-gray-800">Consent</h3>
+        <p><span class="font-normal text-gray-500">Data Collection:</span> <span class="font-medium text-gray-800">${c.consent_data_collection === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+        <p><span class="font-normal text-gray-500">Privacy Policy:</span> <span class="font-medium text-gray-800">${c.consent_privacy_policy === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+        <p><span class="font-normal text-gray-500">Communication:</span> <span class="font-medium text-gray-800">${c.consent_communication === '1' ? 'Agreed' : 'Not agreed'}</span></p>
+    </div>
+
+</div>
+`;
+
+            content.innerHTML = html;
+        } else {
+            content.innerHTML = `
+                <div class="text-center text-red-500 p-8">
+                    <i class="fa-solid fa-exclamation-triangle text-4xl mb-4"></i>
+                    <p class="text-lg font-semibold">Error loading case details</p>
+                </div>
+            `;
+        }
+    });
+}
+
+// Event delegation for dynamically created buttons
+$(document).on('click', '.admin_view_btn', function () {
+    const caseId = $(this).data('case-id');
+    if (caseId) openCaseDetailsModal(caseId);
+    
+});
+
+// Close modal functionality
+$('#closeCaseDetailsModal').on('click', function () {
+    $('#caseDetailsModal').addClass('hidden');
+    $('#caseDetailsModalContent').html('');
+});
+
+// Close modal by clicking outside modal content
+$('#caseDetailsModal').on('click', function (e) {
+    if ($(e.target).is('#caseDetailsModal')) {
+        $(this).addClass('hidden');
+        $('#caseDetailsModalContent').html('');
+    }
+});
+
+
+})
