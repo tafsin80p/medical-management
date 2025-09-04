@@ -41,7 +41,7 @@ jQuery(document).ready(function ($) {
 
 
   // ---------------------------- Add Notification to Dropdown ----------------------------
-  function addNotification(message, status, time = 'just now') {
+  function addNotification(message, status = 'unread', time = 'just now') {
 
     const cleanedMessage = message.replace(/[ _?\/]/g, " ");
 
@@ -70,18 +70,29 @@ jQuery(document).ready(function ($) {
   const $viewAll = $('#clientViewAllNotifications');
 
   $viewAll.on('click', function () {
+
     // 1️⃣ Mark all notifications as read in the UI
-    $clientNotificationList.find('div.notification-item').each(function () {
-      $(this).find('div:first').removeClass('text-gray-800 font-bold').addClass('text-gray-500');
-      $(this).find('div.absolute').remove();
+    $clientNotificationList.find('.notification-item').each(function () {
+      const $item = $(this);
+
+      // Update message text style
+      $item.find('.w-full > div:first')
+        .removeClass('text-gray-800 font-bold')
+        .addClass('text-gray-500');
+
+      // Remove unread dot
+      $item.find('.absolute').remove();
+
+      // Update data-status
+      $item.attr('data-status', 'read');
     });
 
     // 2️⃣ Hide the red dot on the bell icon
     $clientNotificationDot.addClass('hidden');
-
+    
     $.post(ajax_object.ajax_url, {
       action: 'mark_all_notifications_read',
-    }
+    })
   });
 
 
@@ -101,7 +112,6 @@ jQuery(document).ready(function ($) {
       type: type
     });
   }
-
 
 
 
