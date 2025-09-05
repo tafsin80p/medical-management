@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="flex flex-wrap items-center mb-6 bg-white p-4 rounded-lg shadow-md">
     <!-- Search -->
-    <div id='' class="relative flex-1 mr-4">
+    <div class="relative flex-1 mr-4">
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
         <input type="text" id="case-search" placeholder="Search cases..."
             class="w-full text-sm rounded-lg border border-gray-300 p-3 pl-10 h-10 focus:outline-none focus:ring-1 focus:ring-blue-600">
@@ -14,8 +14,9 @@ defined('ABSPATH') || exit;
     <!-- Status Filter -->
     <select id="case-status-filter" class="rounded-lg border border-gray-300 px-2 py-2 mr-4 text-sm ">
         <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
         <option value="open">Open</option>
-        <option value="in-progress">In Progress</option>
+        <option value="progress">Progress</option>
         <option value="closed">Closed</option>
     </select>
 

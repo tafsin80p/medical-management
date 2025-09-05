@@ -1,215 +1,189 @@
 <?php
 defined('ABSPATH') || exit;
+global $wpdb;
 
+$results = $wpdb->get_results("
+    SELECT 
+        c.case_id,
+        c.first_name,
+        c.last_name,
+        c.priority,
+        c.va_file_number,
+        c.created_at,
+        c.case_status,
+        c.assigned_to,
+        s.service_composition,
+        v.condition
+    FROM {$wpdb->prefix}pixelcode_cases AS c
+    LEFT JOIN {$wpdb->prefix}pixelcode_cases_service_history AS s ON c.case_id = s.case_id
+    LEFT JOIN {$wpdb->prefix}pixelcode_cases_va_claims AS v ON c.case_id = v.case_id
+    ORDER BY c.created_at DESC
+");
 ?>
+
 <div class="flex items-center mb-6 bg-white p-2">
     <div class="relative w-9/12 mr-4">
-        <!-- Search -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="lucide lucide-search absolute left-3 top-3 h-5 w-5 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
         </svg>
-        <input type="text" id="case-search"
-            style="padding-left: 2.5rem; border-color: #e5e7eb; outline: none; focus:ring: 0px;"
-            placeholder="Search cases... " class="rounded-lg p-3 h-10 w-full">
+        <input type="text" id="case-search" placeholder="Search cases with case id" class="rounded-lg p-3 h-10 w-full"
+            style="padding-left: 2.5rem; border-color:#e5e7eb;">
     </div>
-
-
-    <!-- Status Filter -->
-    <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10" style="border-color: #e5e7eb;">
+    <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10" style="border-color:#e5e7eb;">
         <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
         <option value="open">Open</option>
-        <option value="in-progress">In Progress</option>
+        <option value="progress">Progress</option>
         <option value="closed">Closed</option>
     </select>
-
-    <!-- Button -->
-    <button
-        id="test-db-butto"
-        class="bg-blue-600 w-1/12 text-white h-10 px-4 py-2 rounded-lg hover:bg-blue-700 flex justify-center  items-center uppercase text-sm font-medium">
-        text db
+    <button id="test-db-button"
+        class="bg-blue-600 w-1/12 text-white h-10 rounded-lg hover:bg-blue-700 flex justify-center items-center uppercase text-sm font-medium">
+        Test DB
     </button>
 </div>
 
-<!-- cases table -->
 <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3">
-                        Case Name
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Status
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Assigned To
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Progress
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Start Date
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Actions
-                    </th>
-                </tr>
-            </thead>
-            
-           <?php
-                // Ensure WordPress functions are available
-                defined('ABSPATH') or die('No direct access.');
-
-                global $wpdb;
-
-                // Query the database to get the case data
-                $query = "
-                    SELECT 
-                        c.case_id, 
-                        c.first_name, 
-                        c.last_name, 
-                        c.email,
-                        c.created_at,
-                        c.phone, 
-                        c.birth_date, 
-                        c.va_file_number, 
-                        c.address, 
-                        c.city, 
-                        c.state, 
-                        c.zip,
-                        s.branch_of_service, 
-                        s.service_composition, 
-                        s.mos_aoc_rate, 
-                        s.duty_position, 
-                        v.condition, 
-                        v.claim_type
-                    FROM {$wpdb->prefix}pixelcode_cases AS c
-                    LEFT JOIN {$wpdb->prefix}pixelcode_cases_service_history AS s ON c.case_id = s.case_id
-                    LEFT JOIN {$wpdb->prefix}pixelcode_cases_va_claims AS v ON c.case_id = v.case_id
-                    ORDER BY c.created_at DESC
-                ";
-
-                $results = $wpdb->get_results($query);
-            ?>
-
-            <tbody>
-    <?php if($results): ?>
-        <?php foreach($results as $row): ?>
-                <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                <!-- Personal Info -->
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div>
-                         <div class="flex items-center">
-                            <div>
-                                <div class="text-sm font-medium text-gray-900"><?= esc_html($row->first_name . ' ' . $row->last_name) ?></div>
-                                <div class="text-sm text-gray-500"><?= esc_html($row->va_file_number . ' • ' . $row->condition) ?></div>
-                            </div><span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">high</span>
-                        </div>
+    <table class="w-full text-sm text-left text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+            <tr>
+                <th class="px-6 py-3">Case Name</th>
+                <th class="px-6 py-3">Case priority</th>
+                <th class="px-6 py-3">Status</th>
+                <th class="px-6 py-3">Assigned To</th>
+                <th class="px-6 py-3">Progress</th>
+                <th class="px-6 py-3">Start Date</th>
+                <th class="px-6 py-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($results): ?>
+            <?php foreach ($results as $row): ?>
+            <tr class="odd:bg-white even:bg-gray-50 border-b">
+                <td class="px-6 py-4">
+                    <div class="text-md font-medium text-gray-900">
+                        MD NEXUSPROS CASES - <?= esc_html($row->first_name . ' ' . $row->last_name) ?>
+                    </div>
+                    <div class="text-sm text-gray-500 mt-2">
+                        Case ID :
+                        <span class="text-gray-800 font-medium case-id">
+                            <?= esc_html($row->case_id) ?>
+                        </span>
                     </div>
                 </td>
-
-                <!-- Status -->
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <!-- <div class="flex items-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock h-5 w-5 text-gray-500">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        <span class=" inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><?= esc_html($row->branch_of_service) ?></span>
-                        <select class='hidden' name="status" id="">
-                            <option value="open">Open</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="closed">Closed</option>
-                        </select>
-                    </div> -->
-
+                <td class="px-6 py-4">
                     <?php
-                    // Assuming $case_id is correctly set here
-                    global $wpdb;
-                    $case_id = 'some_case_id';  // Replace with the actual case ID
-
-                    // Query to get the current status
-                    $query = "
-                        SELECT case_status
-                        FROM {$wpdb->prefix}pixelcode_cases
-                        WHERE case_id = %s
-                    ";
-                    $results = $wpdb->get_results($wpdb->prepare($query, $case_id));
-
-                    // Set the case status, default to 'pending' if not found
-                    $case_status = (isset($results[0]->case_status)) ? $results[0]->case_status : 'pending';
+                        $priority = strtolower($row->priority ?: 'low');
+                        $priorityColors = [
+                            'low'     => 'bg-gray-100 text-gray-800',
+                            'high'    => 'bg-red-100 text-red-800',
+                            'premium' => 'bg-yellow-100 text-yellow-800',
+                        ];
+                        $priorityClass = $priorityColors[$priority] ?? $priorityColors['low'];
                     ?>
 
-                                        <!-- Status Section -->
-                    <div class="flex items-center space-x-2" id="status-container-<?= esc_js($case_id); ?>">
-                        
+                    <!-- Badge -->
+                    <span id="priority-badge-<?= esc_attr($row->case_id) ?>"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $priorityClass ?>">
+                        <?= esc_html(strtoupper($priority)) ?>
+                    </span>
 
-                        <!-- Current Status Text (Initially Visible) -->
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800" id="current-status-<?= esc_js($case_id); ?>"><?= esc_html($case_status); ?></span>
-
-                        <!-- Status Dropdown (Initially Hidden) -->
-                        <select class="hidden" name="status" id="status-dropdown-<?php echo esc_js($row->case_id); ?>" onchange="updateStatus(this, '<?= esc_js($case_id); ?>')">
-                            <option value="open" <?= $case_status == 'open' ? 'selected' : '' ?>>Open</option>
-                            <option value="in_progress" <?= $case_status == 'in_progress' ? 'selected' : '' ?>>In Progress</option>
-                            <option value="closed" <?= $case_status == 'closed' ? 'selected' : '' ?>>Closed</option>
-                        </select>
-                    </div>
-                    
+                    <!-- Dropdown -->
+                    <select id="priority-dropdown-<?= esc_attr($row->case_id) ?>"
+                        class="priority-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
+                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        <option value="low" <?= $priority === 'low' ? 'selected' : '' ?>>Low</option>
+                        <option value="high" <?= $priority === 'high' ? 'selected' : '' ?>>High</option>
+                        <option value="premium" <?= $priority === 'premium' ? 'selected' : '' ?>>Premium</option>
+                    </select>
                 </td>
-
+                <!-- Status -->
+                <td class="px-6 py-4">
+                    <span id="status-badge-<?= esc_attr($row->case_id) ?>"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 status">
+                        <?= esc_html(strtoupper($row->case_status ?: 'PENDING')) ?>
+                    </span>
+                    <select id="status-dropdown-<?= esc_attr($row->case_id) ?>"
+                        class="status-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
+                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="open">Open</option>
+                        <option value="progress">Progress</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </td>
                 <!-- Assigned To -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><?= esc_html($row->service_composition) ?></span>
-                    <!-- <select class="text-sm border border-gray-300 rounded px-2 py-1 ">
-                        <option value="">Unassigned</option>
+                <td class="px-6 py-4">
+                    <span id="assigned-badge-<?= esc_attr($row->case_id) ?>"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <?= esc_html(strtoupper($row->assigned_to ?: 'UNASSIGNED')) ?>
+                    </span>
+                    <select id="assigned-dropdown-<?= esc_attr($row->case_id) ?>"
+                        class="assigned-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
+                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        <option value="">UNASSIGNED</option>
                         <option value="Dr. Sarah Johnson">Dr. Sarah Johnson</option>
                         <option value="Dr. Michael Brown">Dr. Michael Brown</option>
-                    </select> -->
+                    </select>
                 </td>
-
-                <!-- Case Progress -->
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-4">
                     <div class="flex items-center">
                         <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: 60%;"></div>
-                        </div><span class="text-sm text-gray-600">60%</span>
+                            <div class="bg-blue-600 h-2 rounded-full" style="width:60%"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">60%</span>
                     </div>
                 </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <?= esc_html($row->created_at) ?>
+                </td>
+                <td class="px-6 py-4 text-sm font-medium space-x-4">
+                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn"
+                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px"
+                            height="20px" viewBox="0 -4 20 20" version="1.1">
 
-                <!-- Start Date -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc_html($row->created_at) ?></td>
+                            <title>view_simple [#815]</title>
+                            <desc>Created with Sketch.</desc>
+                            <defs>
 
-                <!-- Action -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn" data-case-id="<?php echo $row->case_id; ?>">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye h-5 w-5">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
+                            </defs>
+                            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                <g id="Dribbble-Light-Preview" transform="translate(-260.000000, -4563.000000)"
+                                    fill="#000000">
+                                    <g id="icons" transform="translate(56.000000, 160.000000)">
+                                        <path
+                                            d="M216,4409.00052 C216,4410.14768 215.105,4411.07682 214,4411.07682 C212.895,4411.07682 212,4410.14768 212,4409.00052 C212,4407.85336 212.895,4406.92421 214,4406.92421 C215.105,4406.92421 216,4407.85336 216,4409.00052 M214,4412.9237 C211.011,4412.9237 208.195,4411.44744 206.399,4409.00052 C208.195,4406.55359 211.011,4405.0763 214,4405.0763 C216.989,4405.0763 219.805,4406.55359 221.601,4409.00052 C219.805,4411.44744 216.989,4412.9237 214,4412.9237 M214,4403 C209.724,4403 205.999,4405.41682 204,4409.00052 C205.999,4412.58422 209.724,4415 214,4415 C218.276,4415 222.001,4412.58422 224,4409.00052 C222.001,4405.41682 218.276,4403 214,4403"
+                                            id="view_simple-[#815]">
+
+                                        </path>
+                                    </g>
+                                </g>
+                            </g>
                         </svg>
                     </button>
-                    <!-- Edit Button (Pencil Icon) -->
-                    <button class="text-green-600 hover:text-green-900" onclick="toggleEditStatus(<?php echo esc_js(json_encode($row->case_id)); ?>)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen h-5 w-5">
-                            <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
+                    <button class="text-green-600 hover:text-green-900 cases_edit_button"
+                        data-case-id="<?= $row->case_id ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"
+                            fill="none">
+                            <path
+                                d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z"
+                                stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <path
+                                d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13"
+                                stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </button>
-                    
-
                 </td>
             </tr>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <tr><td colspan="6" class="text-center text-gray-500">No data found.</td></tr>
-    <?php endif; ?>
-</tbody>
-
-        </table>
-    </div>
+            <?php endforeach; ?>
+            <?php else: ?>
+            <tr>
+                <td colspan="6" class="text-center text-gray-500">No data found.</td>
+            </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
-
-<?php

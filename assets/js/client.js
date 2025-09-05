@@ -303,7 +303,8 @@ jQuery(document).ready(function ($) {
       </tr>
     `);
 
-    $.post(ajax_object.ajax_url, { action: 'pixelcode_get_cases' }, function (response) {
+
+    $.post(ajax_object.ajax_url, { action: 'pixelcode_get_all_cases' }, function (response) {
       if (response.success) {
         const cases = response.data.cases;
         tbody.empty();
@@ -324,7 +325,7 @@ jQuery(document).ready(function ($) {
                   MD NEXUSPROS CASES - ${c.first_name ?? 'N/A'} ${c.last_name ?? 'N/A'}
                 </div>
                 <div class="text-sm text-gray-400">
-                  <p>Case ID: <span class="text-gray-500 font-medium">${c.case_id ?? 'N/A'}</span></p>
+                  <p>Case ID: <span class="text-gray-500 font-medium case-id">${c.case_id ?? 'N/A'}</span></p>
                 </div>
               </div>
               <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -336,7 +337,7 @@ jQuery(document).ready(function ($) {
 
           <!-- Case Status -->
           <td class="px-6 py-4 w-1/6">
-            <span class="status-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <span class="status-span status inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
               ${c.case_status ?? 'N/A'}
             </span>
           </td>
@@ -402,7 +403,7 @@ jQuery(document).ready(function ($) {
 
     // Fetch case details via AJAX
     $.post(ajax_object.ajax_url, {
-      action: 'pixelcode_get_case',
+      action: 'pixelcode_get_single_case',
       case_id: caseId
     }, function (response) {
       if (response.success) {
@@ -533,24 +534,34 @@ jQuery(document).ready(function ($) {
   });
 
 
-
-
-
-
-
-// Search only by Case ID
-$('#case-search').on('keyup', function () {
-  const searchValue = $(this).val().toLowerCase().trim(); 
-  $('#case-table-body tr').filter(function () {
-    const caseId = $(this).find('td:first').text().toLowerCase().trim(); 
-    $(this).toggle(caseId.indexOf(searchValue) > -1);
-  });
-});
-
-
-
-
   
+    // ----------------------------------------------------------------------- Case Search
+    $("#case-search").on("keyup", function () {         
+        const value = $(this).val().toLowerCase();
+        $("table tbody tr").filter(function () {
+            const caseId = $(this).find(".case-id").text().toLowerCase();
+            $(this).toggle(caseId.indexOf(value) > -1);
+        });
+    });
+
+    // ------------------------------------------------------------------ Case Status Filter
+    $("#case-status-filter").on("change", function () {
+        const selected = $(this).val().toLowerCase();
+
+        $("table tbody tr").filter(function () {
+            if (selected === "") {
+                $(this).show();
+            } else {
+                const status = $(this).find(".status").text().toLowerCase();
+                $(this).toggle(status.indexOf(selected) > -1);
+            }
+        });
+    });
+
+
+
+
+
 
 
 
