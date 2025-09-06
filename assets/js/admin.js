@@ -399,6 +399,12 @@ jQuery(document).ready(function ($) {
         $(this).addClass("hidden");
         badge.removeClass("hidden");
 
+        $("#status-dropdown-" + caseId).addClass("hidden").focus();
+        $("#status-badge-" + caseId).removeClass("hidden");
+
+        $("#assigned-dropdown-" + caseId).addClass("hidden").focus();
+        $("#assigned-badge-" + caseId).removeClass("hidden");
+
         // AJAX
         $.post(ajaxurl, {
             action: "update_case_priority",
@@ -406,16 +412,16 @@ jQuery(document).ready(function ($) {
             case_id: caseId,
             priority: newPriority
         })
-            .done(function (response) {
-                if (response.success) {
-                    pushNotification('Priority Update Success', 'success');
-                } else {
-                    pushNotification('Failed to execute request', 'error');
-                }
-            })
-            .fail(function (xhr, status, error) {
+        .done(function (response) {
+            if (response.success) {
+                pushNotification('Priority Update Success', 'success');
+            } else {
                 pushNotification('Failed to execute request', 'error');
-            });
+            }
+        })
+        .fail(function (xhr, status, error) {
+            pushNotification('Failed to execute request', 'error');
+        });
     });
 
     // Status Change
@@ -425,8 +431,17 @@ jQuery(document).ready(function ($) {
         const badge = $("#status-badge-" + caseId);
 
         badge.text(newStatus.toUpperCase());
+
         $(this).addClass("hidden");
         badge.removeClass("hidden");
+
+        // Show all dropdowns for this row
+        $("#priority-dropdown-" + caseId).addClass("hidden").focus();
+        $("#priority-badge-" + caseId).removeClass("hidden");
+
+        $("#assigned-dropdown-" + caseId).addClass("hidden").focus();
+        $("#assigned-badge-" + caseId).removeClass("hidden");
+        
 
         $.post(ajaxurl, {
             action: "update_case_status",
@@ -434,16 +449,16 @@ jQuery(document).ready(function ($) {
             case_id: caseId,
             status: newStatus
         })
-            .done(function (response) {
-                if (response.success) {
-                    pushNotification('Status Update Success', 'success');
-                } else {
-                    pushNotification('Failed to execute request', 'error');
-                }
-            })
-            .fail(function (xhr, status, error) {
+        .done(function (response) {
+            if (response.success) {
+                pushNotification('Status Update Success', 'success');
+            } else {
                 pushNotification('Failed to execute request', 'error');
-            });
+            }
+        })
+        .fail(function (xhr, status, error) {
+            pushNotification('Failed to execute request', 'error');
+        });
     });
 
     // Assigned To Change
@@ -456,22 +471,29 @@ jQuery(document).ready(function ($) {
         $(this).addClass("hidden");
         badge.removeClass("hidden");
 
+         // Show all dropdowns for this row
+        $("#priority-dropdown-" + caseId).addClass("hidden").focus();
+        $("#priority-badge-" + caseId).removeClass("hidden");
+
+        $("#status-dropdown-" + caseId).addClass("hidden").focus();
+        $("#status-badge-" + caseId).removeClass("hidden");
+
         $.post(ajaxurl, {
             action: "update_case_assigned",
             nonce: ajax_object.nonce,
             case_id: caseId,
             assigned_to: newAssigned
         })
-            .done(function (response) {
-                if (response.success) {
-                    pushNotification('Dr. Assigned Success', 'success');
-                } else {
-                    pushNotification('Failed to execute request', 'error');
-                }
-            })
-            .fail(function (xhr, status, error) {
+        .done(function (response) {
+            if (response.success) {
+                pushNotification('Dr. Assigned Success', 'success');
+            } else {
                 pushNotification('Failed to execute request', 'error');
-            });
+            }
+        })
+        .fail(function (xhr, status, error) {
+            pushNotification('Failed to execute request', 'error');
+        });
     });
 
 
