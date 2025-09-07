@@ -39,8 +39,12 @@ defined('ABSPATH') || exit;
         <div id="cases" class="tab-panel">
             <?php include PIXELCODE_PLUGIN_DIR . 'templates/admin/case-management.php'; ?>
         </div>
-        <div id="clients" class="tab-panel hidden">Content for Clients</div>
-        <div id="analytics" class="tab-panel hidden">Content for Analytics</div>
+        <div id="clients" class="tab-panel hidden">
+            <?php include PIXELCODE_PLUGIN_DIR . 'templates/admin/client-management.php'; ?>
+        </div>
+        <div id="analytics" class="tab-panel hidden">
+            <?php include PIXELCODE_PLUGIN_DIR . 'templates/admin/analytics.php'; ?>
+        </div>
         <div id="team" class="tab-panel hidden">
             <?php include PIXELCODE_PLUGIN_DIR . 'templates/admin/team-management.php'; ?>
         </div>

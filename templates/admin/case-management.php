@@ -19,6 +19,13 @@ $results = $wpdb->get_results("
     LEFT JOIN {$wpdb->prefix}pixelcode_cases_va_claims AS v ON c.case_id = v.case_id
     ORDER BY c.created_at DESC
 ");
+
+$authors = get_users([
+    'role'    => 'Author',
+    'orderby' => 'display_name',
+    'order'   => 'ASC'
+]);
+
 ?>
 
 <div class="flex items-center mb-6 bg-white p-2">
@@ -33,10 +40,10 @@ $results = $wpdb->get_results("
     </div>
     <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10" style="border-color:#e5e7eb;">
         <option value="">All Statuses</option>
-        <option value="pending">Pending</option>
-        <option value="open">Open</option>
-        <option value="progress">Progress</option>
-        <option value="closed">Closed</option>
+        <option value="pending initial review">Pending Initial Review</option>
+        <option value="pending provider review">Pending Provider Review</option>
+        <option value="signed">Signed</option>
+        <option value="completed">Delivered</option>
     </select>
     <button id="test-db-button"
         class="bg-blue-600 w-1/12 text-white h-10 rounded-lg hover:bg-blue-700 flex justify-center items-center uppercase text-sm font-medium">
@@ -105,13 +112,13 @@ $results = $wpdb->get_results("
                         <?= esc_html(strtoupper($row->case_status ?: 'PENDING')) ?>
                     </span>
                     <select id="status-dropdown-<?= esc_attr($row->case_id) ?>"
-                        class="status-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
+                        class="status-dropdown ml-2 text-sm border rounded px-2 py-1 hidden"
                         data-case-id="<?= esc_attr($row->case_id) ?>">
                         <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="open">Open</option>
-                        <option value="progress">Progress</option>
-                        <option value="closed">Closed</option>
+                        <option value="pending initial review">Pending Initial Review</option>
+                        <option value="pending provider review">Pending Provider Review</option>
+                        <option value="signed">Signed</option>
+                        <option value="completed">Delivered</option>
                     </select>
                 </td>
                 <!-- Assigned To -->
@@ -120,20 +127,29 @@ $results = $wpdb->get_results("
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         <?= esc_html(strtoupper($row->assigned_to ?: 'UNASSIGNED')) ?>
                     </span>
+
                     <select id="assigned-dropdown-<?= esc_attr($row->case_id) ?>"
                         class="assigned-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
                         data-case-id="<?= esc_attr($row->case_id) ?>">
+
                         <option value="">UNASSIGNED</option>
-                        <option value="Dr. Sarah Johnson">Dr. Sarah Johnson</option>
-                        <option value="Dr. Michael Brown">Dr. Michael Brown</option>
+
+                        <?php foreach ($authors as $author): ?>
+                        <option data-dr-id="<?= esc_attr($author->ID) ?>"
+                            value="<?= esc_html($author->display_name) ?>">
+                            <?= esc_html($author->display_name) ?>
+                        </option>
+                        <?php endforeach; ?>
                     </select>
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex items-center">
                         <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width:60%"></div>
+                            <div class="bg-blue-600 h-2 rounded-full progress-bar"
+                                data-case-id="<?= esc_attr($row->case_id) ?>" style="width:0%"></div>
                         </div>
-                        <span class="text-sm text-gray-600">60%</span>
+                        <span class="text-sm text-gray-600 progress-text"
+                            data-case-id="<?= esc_attr($row->case_id) ?>">0%</span>
                     </div>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">

@@ -21,6 +21,10 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 case_id VARCHAR(100) NOT NULL,
                 case_status VARCHAR(100) DEFAULT 'pending',
                 assigned_to VARCHAR(100) DEFAULT 'N/A',
+                assigned_dr_id VARCHAR(100) DEFAULT 'N/A',
+
+                rating INT DEFAULT NULL,
+                rating_date DATETIME DEFAULT NULL,
 
                 package_type VARCHAR(100) NOT NULL,
                 package_price VARCHAR(100) NOT NULL,
@@ -30,9 +34,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 payment_date DATE DEFAULT NULL,
                 payment_amount VARCHAR(100) DEFAULT NULL,
                 payment_method VARCHAR(100) DEFAULT NULL,
-
-                rating INT DEFAULT NULL,
-                rating_date DATETIME DEFAULT NULL,
 
                 user_id VARCHAR(100) NOT NULL,
                 user_name VARCHAR(100) NOT NULL,
@@ -114,7 +115,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 document_type VARCHAR(100),
                 file_path VARCHAR(255),
                 required TINYINT(1) DEFAULT 0,
-
                 PRIMARY KEY (id),
                 KEY case_id (case_id)
             ) $charset_collate;
@@ -172,7 +172,6 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
 
 
 
-
 // ------------------------------- add notification --------------------------------------
 add_action('wp_ajax_add_dashboard_notification', function() {
     if ( ! is_user_logged_in() ) {
@@ -199,7 +198,6 @@ add_action('wp_ajax_add_dashboard_notification', function() {
 
     wp_send_json_success(['message' => 'Notification saved!']);
 });
-
 
 
 
@@ -235,9 +233,6 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
 
 
-
-
-
 // --------------------------- AJAX: Mark All Notifications Read ---------------------------
 add_action('wp_ajax_mark_all_notifications_read', function() {
 
@@ -269,7 +264,6 @@ add_action('wp_ajax_mark_all_notifications_read', function() {
 
     wp_send_json_success(['message' => 'All notifications marked as read.']);
 });
-
 
 
 
@@ -634,21 +628,87 @@ add_action('wp_ajax_update_case_assigned', function () {
     check_ajax_referer('pixelcode_admin_nonce', 'nonce');
 
     global $wpdb;
-    $case_id = sanitize_text_field($_POST['case_id']);
-    $assigned_to   = sanitize_text_field($_POST['assigned_to']);
 
-    
+    $case_id      = sanitize_text_field($_POST['case_id']);
+    $assigned_to  = sanitize_text_field($_POST['assigned_to']);
+    $assigned_dr_id = isset($_POST['dr_id']) ? intval($_POST['dr_id']) : null;
+
+    // Update main case table
     $result = $wpdb->update(
         $wpdb->prefix . 'pixelcode_cases',
-        ['assigned_to' => $assigned_to],
+        [
+            'assigned_to'   => $assigned_to,
+            'assigned_dr_id'=> $assigned_dr_id,
+        ],
         ['case_id' => $case_id],
-        ['%s'],
+        ['%s','%d'], 
         ['%s']
     );
 
-    if($result === false){
+    if ($result === false) {
         wp_send_json_error(['error' => $wpdb->last_error]);
     } else {
-        wp_send_json_success(['updated_rows'=>$result]);
+        wp_send_json_success(['updated_rows' => $result]);
     }
 });
+
+
+
+
+
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+add_action('wp_ajax_update_dashboard', 'update_dashboard_callback');
+add_action('wp_ajax_nopriv_update_dashboard', 'update_dashboard_callback');
+
+function update_dashboard_callback() {
+    global $wpdb;
+
+    $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
+    $today = current_time('Y-m-d H:i:s');
+    $start_date = date('Y-m-d H:i:s', strtotime("-{$days} days", strtotime($today)));
+
+    // Total Revenue
+    $revenue_last = $wpdb->get_var($wpdb->prepare(
+        "SELECT SUM(CAST(payment_amount AS DECIMAL(10,2))) 
+         FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE payment_status='completed' AND payment_date BETWEEN %s AND %s",
+        $start_date, $today
+    ));
+    $revenue_last = $revenue_last ? '$' . number_format($revenue_last, 2) : '$0';
+
+    // Cases Completed
+    $cases_completed = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE case_status='completed' AND created_at BETWEEN %s AND %s",
+        $start_date, $today
+    ));
+    $cases_completed = str_pad($cases_completed, 2, '0', STR_PAD_LEFT);
+
+    // Active Clients
+    $active_cases = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE TRIM(case_status) IN ('pending initial review','pending provider review','signed') 
+           AND created_at BETWEEN %s AND %s",
+        $start_date, $today
+    ));
+    $active_cases_display = $active_cases < 10 ? sprintf("%02d", $active_cases) : $active_cases;
+
+    // Avg Processing Time
+    $avg_processing = $wpdb->get_var($wpdb->prepare(
+        "SELECT AVG(DATEDIFF(payment_date, created_at)) 
+         FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE case_status='completed' AND payment_date BETWEEN %s AND %s",
+        $start_date, $today
+    ));
+    $avg_processing_display = $avg_processing ? round($avg_processing,1) . ' days' : '0 days';
+
+    // Send JSON response
+    wp_send_json([
+        'total_revenue' => $revenue_last,
+        'cases_completed' => $cases_completed,
+        'active_clients' => $active_cases_display,
+        'avg_processing' => $avg_processing_display
+    ]);
+}
