@@ -38,16 +38,15 @@ function pixelcode_enqueue_for_admin() {
     // Only enqueue on our plugin's admin page
     if ( $screen && $screen->id === 'toplevel_page_pixelcode-dashboard' ) {
 
-        // Tailwind CSS
+        // Tailwind CSS (enqueue first)
         wp_enqueue_style(
             'pixelcode-tailwind',
             'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
             [],
             '2.2.19'
         );
-        
 
-        // Custom admin CSS
+        // Custom admin CSS (Tailwind এর পরে load হবে)
         wp_enqueue_style(
             'pixelcode-admin-css',
             PIXELCODE_PLUGIN_URL . 'assets/css/admin.css',
@@ -71,7 +70,8 @@ function pixelcode_enqueue_for_admin() {
         ]);
     }
 }
-add_action('admin_enqueue_scripts', 'pixelcode_enqueue_for_admin');
+// Correct priority set (5 to load before most scripts/styles)
+add_action('admin_enqueue_scripts', 'pixelcode_enqueue_for_admin', 1);
 
 
 

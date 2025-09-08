@@ -13,7 +13,7 @@ function pixelcode_admin_menu() {
         'pixelcode-dashboard',                
         'pixelcode_admin_dashboard_page',     
         'dashicons-analytics',            
-        30                                
+        8                                
     );
 }
 
