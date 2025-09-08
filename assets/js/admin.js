@@ -649,7 +649,7 @@ jQuery(document).ready(function ($) {
 
     // ------------------------------------------------------------------ Case Status Filter
     $("#case-status-filter").on("change", function () {
-        const selected = $(this).val().toLowerCase();
+        const selected = $(this).val().toLowerCase();        
 
         $("table tbody tr").filter(function () {
             if (selected === "") {
@@ -660,6 +660,55 @@ jQuery(document).ready(function ($) {
             }
         });
     });
+
+    // ------------------------------------------------------------------ Case Priority Filter
+    $("#case-priority-filter").on("change", function () {
+        const selected = $(this).val().toLowerCase();        
+
+        $("table tbody tr").filter(function () {
+            if (selected === "") {
+                $(this).show();
+            } else {
+                const status = $(this).find(".priority").text().toLowerCase();
+                $(this).toggle(status.indexOf(selected) > -1);
+            }
+        });
+    });
+
+
+    // --------------------------- case progress ------------------------------------------
+    jQuery(document).ready(function ($) {
+        $(".status-dropdown").on("change", function () {
+            var caseId = $(this).data("case-id");
+            var status = $(this).val();
+
+            // map statuses to progress %
+            var map = {
+                "pending initial review": 25,
+                "pending provider review": 50,
+                "signed": 75,
+                "completed": 100
+            };
+
+            var progress = map[status] || 0;
+
+            // update progress bar width
+            $('.progress-bar[data-case-id="' + caseId + '"]').css("width", progress + "%");
+
+            // update progress text
+            $('.progress-text[data-case-id="' + caseId + '"]').text(progress + "%");
+
+            // 🔹 Optional: Save change to DB via AJAX
+            $.post(ajaxurl, {
+                action: "update_case_status",
+                case_id: caseId,
+                case_status: status
+            }, function (response) {
+                console.log("Status updated:", response);
+            });
+        });
+    });
+
 
     // ---------------------------- Load notifications from DB on page load ----------------------------
     function loadNotifications() {

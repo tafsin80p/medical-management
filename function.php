@@ -712,3 +712,33 @@ function update_dashboard_callback() {
         'avg_processing' => $avg_processing_display
     ]);
 }
+
+
+
+
+// ------------------------- cases progress ------------------------------------------------
+add_action('wp_ajax_update_case_status', 'update_case_status_callback');
+add_action('wp_ajax_nopriv_update_case_status', 'update_case_status_callback');
+
+function update_case_status_callback() {
+    global $wpdb;
+    $table = $wpdb->prefix . "pixelcode_cases";
+
+    $case_id = sanitize_text_field($_POST['case_id']);
+    $case_status = sanitize_text_field($_POST['case_status']);
+
+    $updated = $wpdb->update(
+        $table,
+        ['case_status' => $case_status],
+        ['case_id' => $case_id],
+        ['%s'],
+        ['%s']
+    );
+
+    if ($updated !== false) {
+        wp_send_json_success("Case status updated successfully");
+    } else {
+        wp_send_json_error("Failed to update case status");
+    }
+}
+

@@ -1,7 +1,9 @@
 <?php
 defined('ABSPATH') || exit;
+
 global $wpdb;
 
+// ✅ Fetch cases with joins (optimized query)
 $results = $wpdb->get_results("
     SELECT 
         c.case_id,
@@ -20,43 +22,72 @@ $results = $wpdb->get_results("
     ORDER BY c.created_at DESC
 ");
 
+// ✅ Fetch authors once
 $authors = get_users([
     'role'    => 'Author',
     'orderby' => 'display_name',
     'order'   => 'ASC'
 ]);
 
+// ✅ Status → Progress mapping
+$status_progress = [
+    'pending initial review' => 25,
+    'pending provider review' => 50,
+    'signed'                 => 75,
+    'completed'              => 100,
+];
+
+// ✅ Priority → Badge colors
+$priorityColors = [
+    'low'     => 'bg-gray-100 text-gray-800',
+    'high'    => 'bg-red-100 text-red-800',
+    'premium' => 'bg-yellow-100 text-yellow-800',
+];
 ?>
 
+<!-- 🔹 Filters -->
 <div class="flex items-center mb-6 bg-white p-2">
+    <!-- Search -->
     <div class="relative w-9/12 mr-4">
         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-3 h-5 w-5 text-gray-400" fill="none"
             viewBox="0 0 24 24" stroke="currentColor">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
         </svg>
-        <input type="text" id="case-search" placeholder="Search cases with case id" class="rounded-lg p-3 h-10 w-full"
-            style="padding-left: 2.5rem; border-color:#e5e7eb;">
+        <input style='padding-left: 40px;' type="text" id="case-search" placeholder="Search cases with case ID"
+            class="rounded-lg p-3 h-10 w-full border border-gray-200">
     </div>
-    <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10" style="border-color:#e5e7eb;">
+
+    <!-- Priority filter -->
+    <select id="case-priority-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10 border border-gray-200">
         <option value="">All Statuses</option>
-        <option value="pending initial review">Pending Initial Review</option>
-        <option value="pending provider review">Pending Provider Review</option>
-        <option value="signed">Signed</option>
-        <option value="completed">Delivered</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+        <option value="premium">Premium</option>
     </select>
+    
+    <!-- Status filter -->
+    <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10 border border-gray-200">
+        <option value="">All Statuses</option>
+        <?php foreach ($status_progress as $status => $progress): ?>
+        <option value="<?= esc_attr($status) ?>"><?= esc_html(ucwords($status)) ?></option>
+        <?php endforeach; ?>
+    </select>
+
+    <!-- DB test button -->
     <button id="test-db-button"
         class="bg-blue-600 w-1/12 text-white h-10 rounded-lg hover:bg-blue-700 flex justify-center items-center uppercase text-sm font-medium">
         Test DB
     </button>
 </div>
 
+<!-- 🔹 Table -->
 <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
     <table class="w-full text-sm text-left text-gray-500">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
                 <th class="px-6 py-3">Case Name</th>
-                <th class="px-6 py-3">Case priority</th>
+                <th class="px-6 py-3">Priority</th>
                 <th class="px-6 py-3">Status</th>
                 <th class="px-6 py-3">Assigned To</th>
                 <th class="px-6 py-3">Progress</th>
@@ -67,97 +98,100 @@ $authors = get_users([
         <tbody>
             <?php if ($results): ?>
             <?php foreach ($results as $row): ?>
-            <tr class="odd:bg-white even:bg-gray-50 border-b">
-                <td class="px-6 py-4">
-                    <div class="text-md font-medium text-gray-900">
-                        MD NEXUSPROS CASES - <?= esc_html($row->first_name . ' ' . $row->last_name) ?>
-                    </div>
-                    <div class="text-sm text-gray-500 mt-2">
-                        Case ID :
-                        <span class="text-gray-800 font-medium case-id">
-                            <?= esc_html($row->case_id) ?>
-                        </span>
-                    </div>
-                </td>
-                <td class="px-6 py-4">
-                    <?php
-                        $priority = strtolower($row->priority ?: 'low');
-                        $priorityColors = [
-                            'low'     => 'bg-gray-100 text-gray-800',
-                            'high'    => 'bg-red-100 text-red-800',
-                            'premium' => 'bg-yellow-100 text-yellow-800',
-                        ];
+            <?php
+                        // Case values
+                        $case_id   = esc_attr($row->case_id);
+                        $priority  = strtolower($row->priority ?: 'low');
+                        $status    = strtolower(trim($row->case_status ?: 'pending'));
+                        $progress  = $status_progress[$status] ?? 0;
                         $priorityClass = $priorityColors[$priority] ?? $priorityColors['low'];
                     ?>
+            <tr class="odd:bg-white even:bg-gray-50 border-b">
+                <!-- Case Name -->
+                <td class="px-6 py-4">
+                    <div class="text-md font-medium text-gray-900">
+                        MD NEXUSPROS CASES - <?= esc_html("{$row->first_name} {$row->last_name}") ?>
+                    </div>
+                    <div class="text-sm text-gray-500 mt-2">
+                        Case ID: <span class="text-gray-800 font-medium case-id"><?= esc_html($row->case_id) ?></span>
+                    </div>
+                </td>
 
-                    <!-- Badge -->
-                    <span id="priority-badge-<?= esc_attr($row->case_id) ?>"
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $priorityClass ?>">
+                <!-- Priority -->
+                <td class="px-6 py-4">
+                    <span id="priority-badge-<?= $case_id ?>"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium priority <?= $priorityClass ?>">
                         <?= esc_html(strtoupper($priority)) ?>
                     </span>
-
-                    <!-- Dropdown -->
-                    <select id="priority-dropdown-<?= esc_attr($row->case_id) ?>"
+                    <select id="priority-dropdown-<?= $case_id ?>"
                         class="priority-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
-                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        data-case-id="<?= $case_id ?>">
                         <option value="low" <?= $priority === 'low' ? 'selected' : '' ?>>Low</option>
                         <option value="high" <?= $priority === 'high' ? 'selected' : '' ?>>High</option>
                         <option value="premium" <?= $priority === 'premium' ? 'selected' : '' ?>>Premium</option>
                     </select>
                 </td>
+
                 <!-- Status -->
                 <td class="px-6 py-4">
-                    <span id="status-badge-<?= esc_attr($row->case_id) ?>"
+                    <span id="status-badge-<?= $case_id ?>"
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 status">
-                        <?= esc_html(strtoupper($row->case_status ?: 'PENDING')) ?>
+                        <?= esc_html(strtoupper($status)) ?>
                     </span>
-                    <select id="status-dropdown-<?= esc_attr($row->case_id) ?>"
+                    <select id="status-dropdown-<?= $case_id ?>"
                         class="status-dropdown ml-2 text-sm border rounded px-2 py-1 hidden"
-                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                        data-case-id="<?= $case_id ?>">
                         <option value="">All Statuses</option>
-                        <option value="pending initial review">Pending Initial Review</option>
-                        <option value="pending provider review">Pending Provider Review</option>
-                        <option value="signed">Signed</option>
-                        <option value="completed">Delivered</option>
+                        <?php foreach ($status_progress as $st => $pr): ?>
+                        <option value="<?= esc_attr($st) ?>" <?= $st === $status ? 'selected' : '' ?>>
+                            <?= esc_html(ucwords($st)) ?>
+                        </option>
+                        <?php endforeach; ?>
                     </select>
                 </td>
-                <!-- Assigned To -->
+
+                <!-- Assigned -->
                 <td class="px-6 py-4">
-                    <span id="assigned-badge-<?= esc_attr($row->case_id) ?>"
+                    <span id="assigned-badge-<?= $case_id ?>"
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         <?= esc_html(strtoupper($row->assigned_to ?: 'UNASSIGNED')) ?>
                     </span>
-
-                    <select id="assigned-dropdown-<?= esc_attr($row->case_id) ?>"
+                    <select id="assigned-dropdown-<?= $case_id ?>"
                         class="assigned-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
-                        data-case-id="<?= esc_attr($row->case_id) ?>">
-
+                        data-case-id="<?= $case_id ?>">
                         <option value="">UNASSIGNED</option>
-
                         <?php foreach ($authors as $author): ?>
-                        <option data-dr-id="<?= esc_attr($author->ID) ?>"
-                            value="<?= esc_html($author->display_name) ?>">
+                        <option data-dr-id="<?= esc_attr($author->ID) ?>" value="<?= esc_html($author->display_name) ?>"
+                            <?= $author->display_name === $row->assigned_to ? 'selected' : '' ?>>
                             <?= esc_html($author->display_name) ?>
                         </option>
                         <?php endforeach; ?>
                     </select>
                 </td>
+
+                <!-- Progress -->
                 <td class="px-6 py-4">
                     <div class="flex items-center">
                         <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
-                            <div class="bg-blue-600 h-2 rounded-full progress-bar"
-                                data-case-id="<?= esc_attr($row->case_id) ?>" style="width:0%"></div>
+                            <div class="bg-blue-600 h-2 rounded-full progress-bar" data-case-id="<?= $case_id ?>"
+                                style="width: <?= $progress ?>%; transition: width 0.5s;">
+                            </div>
                         </div>
-                        <span class="text-sm text-gray-600 progress-text"
-                            data-case-id="<?= esc_attr($row->case_id) ?>">0%</span>
+                        <span class="text-sm font-semibold text-gray-700 progress-text" data-case-id="<?= $case_id ?>">
+                            <?= $progress ?>%
+                        </span>
                     </div>
                 </td>
+
+                <!-- Start Date -->
                 <td class="px-6 py-4 text-sm text-gray-900">
                     <?= esc_html($row->created_at) ?>
                 </td>
+
+                <!-- Actions -->
                 <td class="px-6 py-4 text-sm font-medium space-x-4">
-                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn"
-                        data-case-id="<?= esc_attr($row->case_id) ?>">
+                    <!-- View -->
+                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn" data-case-id="<?= $case_id ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px"
                             height="20px" viewBox="0 -4 20 20" version="1.1">
 
@@ -180,8 +214,9 @@ $authors = get_users([
                             </g>
                         </svg>
                     </button>
+                    <!-- Edit -->
                     <button class="text-green-600 hover:text-green-900 cases_edit_button"
-                        data-case-id="<?= $row->case_id ?>">
+                        data-case-id="<?= $case_id ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"
                             fill="none">
                             <path
@@ -197,7 +232,7 @@ $authors = get_users([
             <?php endforeach; ?>
             <?php else: ?>
             <tr>
-                <td colspan="6" class="text-center text-gray-500">No data found.</td>
+                <td colspan="7" class="text-center text-gray-500 py-4">No cases found.</td>
             </tr>
             <?php endif; ?>
         </tbody>
