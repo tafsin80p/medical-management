@@ -65,7 +65,7 @@ $priorityColors = [
         <option value="high">High</option>
         <option value="premium">Premium</option>
     </select>
-    
+
     <!-- Status filter -->
     <select id="case-status-filter" class="rounded-lg px-4 py-2 mr-4 w-2/12 h-10 border border-gray-200">
         <option value="">All Statuses</option>

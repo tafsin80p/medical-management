@@ -3,7 +3,7 @@ defined('ABSPATH') || exit;
 
 ?>
 <!-- Case Details Modal -->
-<div id="caseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+<div id="caseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden pixelcodeCasemodel">
     <div class="flex justify-center p-4">
         <div style="height:90vh" class="bg-white rounded-lg shadow-xl max-w-4xl w-full overflow-y-scroll">
             <!-- Modal Header -->

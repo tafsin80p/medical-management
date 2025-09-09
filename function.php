@@ -19,7 +19,7 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
                 case_id VARCHAR(100) NOT NULL,
-                case_status VARCHAR(100) DEFAULT 'pending',
+                case_status VARCHAR(100) DEFAULT 'pending initial review',
                 assigned_to VARCHAR(100) DEFAULT 'N/A',
                 assigned_dr_id VARCHAR(100) DEFAULT 'N/A',
 
@@ -298,6 +298,7 @@ function pixelcode_submit_form() {
         "{$wpdb->prefix}pixelcode_cases",
         [
             'case_id' => $case_id,
+            'case_status' => 'pending initial review',
             'user_id' => $user_id,
             'user_name' => $user_name,
             'user_email' => $user_email,
@@ -741,4 +742,3 @@ function update_case_status_callback() {
         wp_send_json_error("Failed to update case status");
     }
 }
-

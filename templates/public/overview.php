@@ -1,37 +1,75 @@
 <?php
 defined('ABSPATH') || exit;
 
-// Define cards
-$cards = [
-    [
+global $wpdb;
+
+// Current user
+$current_user_id = get_current_user_id();
+
+// Queries (use get_var for counts directly)
+$total_cases = $wpdb->get_var(
+    $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE user_id = %d",
+        $current_user_id
+    )
+);
+
+$active_cases = $wpdb->get_var(
+    $wpdb->prepare(
+        "SELECT COUNT(*) 
+         FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE user_id = %d 
+         AND TRIM(case_status) IN ('pending initial review','pending provider review','signed')",
+        $current_user_id
+    )
+);
+
+$completed_cases = $wpdb->get_var(
+    $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}pixelcode_cases 
+         WHERE user_id = %d 
+         AND TRIM(case_status) = 'completed'",
+        $current_user_id
+    )
+);
+
+// Config
+$card_config = [
+    'total' => [
         'title' => 'Total Cases',
-        'count' => empty($total_cases) ? 'N/A' : str_pad(count($total_cases), 2, '0', STR_PAD_LEFT),
         'icon'  => '<i class="fa-regular fa-file"></i>',
         'desc'  => 'All your cases in the system',
+        'count' => $total_cases,
     ],
-    [
+    'active' => [
         'title' => 'Active Cases',
-        'count' => empty($active_cases) ? 'N/A' : str_pad(count($active_cases), 2, '0', STR_PAD_LEFT),
         'icon'  => '<i class="fa-regular fa-clock"></i>',
-        'desc'  => empty($completed_cases) ? 'N/A Completed Cases' : str_pad(count($completed_cases), 2, '0', STR_PAD_LEFT) . ' Completed Cases',
+        'desc'  => 'Cases that are currently active',
+        'count' => $active_cases,
     ],
-    [
-        'title' => 'Rejected Cases',
-        'count' => empty($rejected_cases) ? 'N/A' : str_pad(count($rejected_cases), 2, '0', STR_PAD_LEFT),
-        'icon'  => '<i class="fa-solid fa-xmark"></i>',
-        'desc'  => !empty($rejected_cases) ? 'These cases were rejected' : '',
-    ],
-    [
-        'title' => 'Requested Cases',
-        'count' => empty($requested_cases) ? 'N/A' : str_pad(count($requested_cases), 2, '0', STR_PAD_LEFT),
-        'icon'  => '<i class="fa-regular fa-paper-plane"></i>',
-        'desc'  => 'Cases you have requested',
+    'complete' => [
+        'title' => 'Complete Cases',
+        'icon'  => '<i class="fa-solid fa-circle-check"></i>',
+        'desc'  => 'Cases that are completed',
+        'count' => $completed_cases,
     ],
 ];
 
+// Final dynamic array
+$cards = [];
+
+foreach ($card_config as $item) {
+    $cards[] = [
+        'title' => $item['title'],
+        'count' => empty($item['count']) ? 'N/A' : str_pad($item['count'], 2, '0', STR_PAD_LEFT),
+        'icon'  => $item['icon'],
+        'desc'  => $item['desc'],
+    ];
+}
 ?>
 <header
-    class="flex items-center justify-between border-b border-gray-200 pb-4 bg-white px-6 mt-6 rounded-lg py-4 container">
+    class="flex items-center justify-between border-b border-gray-200 pb-4 bg-white px-6 mt-6 rounded-lg py-4 container pixelcode">
     <div>
         <!-- Header -->
         <h1 class="text-2xl text-gray-800 mb-2 flex items-center gap-2">
@@ -51,7 +89,6 @@ $cards = [
         </p>
     </div>
 
-
     <div class="relative w-full max-w-xs flex justify-end">
         <!-- Client Notification Button -->
         <button id="clientDropdownNotificationButton"
@@ -67,8 +104,7 @@ $cards = [
         <div id="clientDropdownNotification"
             class="z-20 hidden w-full max-w-sm bg-white rounded-lg shadow-sm absolute right-0 mt-6" role="menu"
             aria-labelledby="clientDropdownNotificationButton">
-            <div
-                class="block px-4 py-2 font-medium text-center text-gray-700 rounded-t-lg bg-gray-50 text-sm">
+            <div class="block px-4 py-2 font-medium text-center text-gray-700 rounded-t-lg bg-gray-50 text-sm">
                 Notifications
             </div>
             <div id="clientNotificationList"
@@ -90,7 +126,7 @@ $cards = [
     </div>
 </header>
 
-<main class="mt-6 container">
+<main class="mt-6 container pixelcode">
     <div
         class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full rounded-lg my-4">
         <?php foreach ($cards as $card) : ?>
@@ -117,4 +153,3 @@ $cards = [
         <?php endforeach; ?>
     </div>
 </main>
-<?php

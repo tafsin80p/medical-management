@@ -1,3 +1,20 @@
+#case-form-container label {
+  color: #111 !important;
+}
+
+#case-form-container h1 {
+  font-size: 1.7rem !important;
+  color: #fff;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+#case-form-container h2 {
+  font-size: 1.5rem !important;
+  line-height: 1.2 !important;
+  margin-bottom: 20px !important;
+}
+
 #intake-form button {
   background-color: #2563eb;
   color: white;
@@ -75,7 +92,6 @@
   border: 1px solid #e5e7eb;
 }
 
-
 /* Step Circle Styles */
 .step-circle {
   position: relative;
@@ -98,7 +114,6 @@
   color: white;
 }
 
-
 /* Line between circles */
 .step-line {
   width: 4rem;
@@ -110,4 +125,187 @@
 /* Active Line Styles */
 .step-line.active {
   background-color: #2563eb;
+}
+
+header.pixelcode {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+header.pixelcode h1 {
+  font-size: 2rem !important;
+  line-height: 0 !important;
+}
+
+header.pixelcode button {
+  all: unset;
+  background: unset !important;
+  color: #111 !important;
+}
+
+header.pixelcode button #clientNotificationDot {
+  background: blueviolet !important;
+}
+
+main.pixelcode h3 {
+  font-size: 0.9rem !important;
+  line-height: 1;
+  color: #11111190;
+}
+
+main.pixelcode p {
+  margin: 0;
+}
+
+.pixelcodeCaselists button {
+  all: unset !important;
+  padding: 10px 20px !important;
+  cursor: pointer !important;
+  border-bottom: 2px solid !important;
+  border-color: transparent !important;
+}
+
+button.border-blue-600 {
+  border-color: blue !important;
+}
+
+.pixelcodeFilter {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Search Box */
+.pixelcodeFilter div {
+  position: relative !important;
+}
+
+.pixelcodeFilter i {
+  position: absolute !important;
+  top: 50% !important;
+  left: 10px !important;
+  transform: translateY(-50%) !important;
+  color: #9ca3af !important;
+  font-size: 14px !important;
+}
+
+.pixelcodeFilter input[type="text"] {
+  width: 100% !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 8px 10px 8px 30px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  color: #111 !important;
+}
+
+.pixelcodeFilter input[type="text"]:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 1px #2563eb !important;
+}
+
+/* Select */
+.pixelcodeFilter select {
+  border: 1px solid #d1d5db !important;
+  width: 150px;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  color: #111 !important;
+}
+
+.pixelcodeFilter select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 1px #2563eb !important;
+}
+
+/* Button */
+.pixelcodeFilter button {
+  background: #2563eb !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.pixelcodeFilter button:hover {
+  background: #1d4ed8 !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.pixelcodeTable table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+  text-align: left !important;
+  border: 1px solid #91919113 !important;
+}
+
+.pixelcodeTable th,
+.pixelcodeTable td {
+  border: none !important;
+  padding: 10px 15px !important;
+}
+
+.pixelcodeTable th {
+  background-color: #fff !important;
+  color: #111 !important;
+  font-weight: bolder !important;
+}
+
+.pixelcodeTable tr {
+  background-color: #fff !important;
+  color: #111 !important;
+  font-weight: bold !important;
+}
+
+.pixelcodeTable tr:nth-child(even) {
+  background-color: #fff !important;
+}
+
+.pixelcodeTable tr:hover {
+  background-color: #f1f1f1 !important;
+}
+
+.pixelcodeTable h6 {
+  font-weight: bold !important;
+  font-size: 0.9rem !important;
+  margin: 0 !important;
+}
+
+.pixelcodeCasemodel h3 {
+  font-size: 1.3rem !important;
+  margin: 0 !important;
+}
+
+.pixelcodeCasemodel h1 {
+  font-size: 1rem !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+}
+
+.pixelcodeCasemodel button {
+  all: unset !important;
+  color: #111 !important;
+  cursor: pointer !important;
+}
+
+.pixelcodeNotification button {
+  all: unset !important;
+  color: #111 !important;
+  cursor: pointer !important;
 }

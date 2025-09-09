@@ -190,7 +190,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
         <!-- ------------------------------------------------------------------------------------------------------------------------------ -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Total Revenue Card -->
-            <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow duration-300">
+            <div class="bg-gray-100 rounded-xl shadow p-6 hover:shadow-lg transition-shadow duration-300 border">
                 <div class='flex items-center justify-between'>
                     <div>
                         <p class="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -209,7 +209,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
             </div>
 
             <!-- ---------------------------------------------------------------------------------------------------------------------------------- -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-gray-100 rounded-xl shadow p-6 hover:shadow-lg transition-shadow duration-300 border">
                 <div class="flex justify-between items-center">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Cases Completed</p>
@@ -230,7 +230,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
 
 
             <!-- ---------------------------------------------------------------------------------------------------------------------------------------- -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-gray-100 rounded-xl shadow p-6 hover:shadow-lg transition-shadow duration-300 border">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Active Clients</p>
@@ -253,7 +253,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
 
 
             <!-- --------------------------------------------------------------------------------------------------------------------------------------------- -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-gray-100 rounded-xl shadow p-6 hover:shadow-lg transition-shadow duration-300 border">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">AVG Processing </p>
@@ -274,7 +274,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-gray-100 border rounded-lg shadow p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-6">Monthly Performance</h3>
                 <div class="space-y-4">
                     <?php foreach ($months as $month): 
@@ -300,7 +300,7 @@ $avg_rating = $avg_rating ? round($avg_rating, 1) . '/5' : '0/5';
             </div>
 
 
-            <div class="bg-white rounded-lg shadow p-6">
+            <div class="bg-gray-100 border rounded-lg shadow p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-6">Current Case Status</h3>
                 <div class="space-y-4">
                     <?php foreach ($case_status_counts as $status): 
