@@ -11,7 +11,7 @@ $clients = $wpdb->get_results("
 ?>
 
 <div class="overflow-x-auto bg-white rounded-lg shadow-sm w-full mt-8">
-    <table class="w-full text-sm text-left text-gray-500">
+    <table class="w-full text-sm text-left text-gray-500 table">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
                 <th class="px-6 py-3">Client Name</th>

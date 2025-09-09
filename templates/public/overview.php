@@ -95,9 +95,7 @@ foreach ($card_config as $item) {
             class="relative inline-flex items-center text-sm font-medium text-center text-gray-500 hover:text-gray-900 focus:outline-none"
             type="button" aria-haspopup="true" aria-expanded="false">
             <i style="font-size: 1.5rem !important" class="fa-regular fa-bell"></i>
-            <div id="clientNotificationDot"
-                class="absolute w-3 h-3 bg-red-500 border-2 border-white rounded-full -top-0.5 start-2.5 dark:border-gray-900">
-            </div>
+            
         </button>
 
         <!-- Client Dropdown -->

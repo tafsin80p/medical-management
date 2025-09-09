@@ -192,7 +192,7 @@ jQuery(document).ready(function ($) {
         input
           .addClass("border-red-500")
           .after(
-            `<p class="error-message text-xs text-red-500 mt-1">This field is required</p>`
+            `<p class="error-message text-xs text-red-500 mt-1">${input.attr("placeholder")} is required</p>`
           );
       }
     });
@@ -276,8 +276,9 @@ jQuery(document).ready(function ($) {
           showStep(currentStep);
           $("#case-form-container").addClass("hidden");
           pushNotification(data.data.message, "success");
+          loadCases();
         } else {
-          pushNotification("Something went wrong. Please try again.", "error");
+          pushNotification(data.data.message, "error");
         }
       },
       error: function () {
@@ -290,19 +291,9 @@ jQuery(document).ready(function ($) {
   // ---------------------------- Cases Table ----------------------------
   function loadCases() {
     const tbody = $("#case-table-body");
-    tbody.html(`
-      <tr>
-        <td colspan="6" class="px-6 py-4 text-center">
-          <div class="flex justify-center items-center space-x-2">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-            <span class="text-gray-600">Loading cases...</span>
-          </div>
-        </td>
-      </tr>
-    `);
+    tbody.html(
+      '<tr><td colspan="6" class="px-6 py-4 text-center"><div class="flex justify-center items-center space-x-2"><svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span class="text-gray-600">Loading cases...</span></div></td></tr>'
+    );
 
     $.post(
       ajax_object.ajax_url,

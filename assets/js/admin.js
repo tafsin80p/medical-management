@@ -244,7 +244,7 @@ jQuery(document).ready(function ($) {
         action: "pixelcode_get_single_case",
         case_id: caseId,
       },
-      function (response) {
+      function (response) {        
         if (response.success) {
           const c = response.data.case;
 
@@ -461,7 +461,7 @@ jQuery(document).ready(function ($) {
 
   // Event delegation for dynamically created buttons
   $(document).on("click", ".admin_view_btn", function () {
-    const caseId = $(this).data("case-id");
+    const caseId = $(this).data("case-id");    
     if (caseId) openCaseDetailsModal(caseId);
   });
 

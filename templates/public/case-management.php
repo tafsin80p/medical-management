@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="pixelcodeFilter">
     <!-- Search -->
-    <div>
+    <div class="w-9/12">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="text" id="case-search" placeholder="Search cases...">
     </div>
@@ -27,7 +27,7 @@ defined('ABSPATH') || exit;
 
 <!-- Cases Table -->
 <div class="overflow-x-auto bg-white rounded-lg shadow-md pixelcodeTable">
-    <table class="w-full text-sm text-left text-gray-500">
+    <table class="w-full text-sm text-left text-gray-500 table">
         <thead class="bg-gray-50 text-xs text-gray-700 uppercase">
             <tr>
                 <th class="px-6 py-3">Case Name</th>
