@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+
   // ---------------------------- Notification Function ----------------------------
   function showNotification(message, type = "success") {
     const cleanedMessage = message.replace(/[ _?\/]/g, " ");
@@ -288,11 +289,37 @@ jQuery(document).ready(function ($) {
     });
   });
 
+  function getAssignedColor(name) {
+    const assignedColors = {
+      'unassigned': "bg-gray-100 text-gray-800",
+    };
+
+    if (assignedColors[name.toLowerCase()]) {
+      return assignedColors[name.toLowerCase()];
+    }
+
+    // Simple hash function to generate a color
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // For simplicity, we'll just use a few predefined colors
+    const colors = [
+      "bg-pink-100 text-pink-800",
+      "bg-indigo-100 text-indigo-800",
+      "bg-teal-100 text-teal-800",
+    ];
+    return colors[Math.abs(hash) % colors.length];
+  }
+
   // ---------------------------- Cases Table ----------------------------
   function loadCases() {
+    console.log('ok');
+    
     const tbody = $("#case-table-body");
     tbody.html(
-      '<tr><td colspan="6" class="px-6 py-4 text-center"><div class="flex justify-center items-center space-x-2"><svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span class="text-gray-600">Loading cases...</span></div></td></tr>'
+      '<tr><td colspan="7" class="px-6 py-4 text-center"><div class="flex justify-center items-center space-x-2"><svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span class="text-gray-600">Loading cases...</span></div></td></tr>'
     );
 
     $.post(
@@ -301,11 +328,15 @@ jQuery(document).ready(function ($) {
       function (response) {
         if (response.success) {
           const cases = response.data.cases;
+
+          console.log(cases);
+          
+          
           tbody.empty();
 
           if (!cases || cases.length === 0) {
             tbody.html(
-              '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No cases found</td></tr>'
+              '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No cases found</td></tr>'
             );
             return;
           }
@@ -318,70 +349,87 @@ jQuery(document).ready(function ($) {
             completed: 100,
           };
 
+          const priorityColors = {
+            low: "bg-gray-100 text-gray-800",
+            high: "bg-red-100 text-red-800",
+            premium: "bg-yellow-100 text-yellow-800",
+          };
+
+          const statusColors = {
+            'pending initial review': "bg-yellow-100 text-yellow-800",
+            'pending provider review': "bg-blue-100 text-blue-800",
+            signed: "bg-green-100 text-green-800",
+            completed: "bg-purple-100 text-purple-800",
+          };
+
           cases.forEach((c) => {
             const progress = progressMap[c.case_status] ?? 0;
+            const priorityClass = priorityColors[c.priority.toLowerCase()] || priorityColors['low'];
+            const statusClass = statusColors[c.case_status.toLowerCase()] || "bg-gray-100 text-gray-800";
+            const assignedTo = c.assigned_to || "unassigned";
+            const assignedClass = getAssignedColor(assignedTo);
+
             const row = `
                   <tr id="${
                     c.case_id
-                  }" class="bg-white border-b hover:bg-gray-50">
+                  }" class="odd:bg-white even:bg-b-50 border-b">
 
                     <!-- Case Info -->
-                    <td class="px-6 py-4 w-1/3">
-                      <div class="flex items-start">
-                        <div>
-                          <h6 class="text-md font-medium text-gray-900">
+                    <td class="px-6 py-4">
+                        <div class="text-md font-medium text-gray-900">
                             MD NEXUSPROS CASES - ${c.first_name ?? "N/A"} ${
               c.last_name ?? "N/A"
             }
-                          </h6>
-                          <div class="text-sm text-gray-400">
-                            <p>Case ID: <span class="text-gray-500 font-medium case-id">${
-                              c.case_id ?? "N/A"
-                            }</span></p>
-                          </div>
                         </div>
-                        <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${
-                            c.priority === "High"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }">
-                          ${c.priority || "N/A"}
+                        <div class="text-sm text-gray-500 mt-2">
+                            Case ID: <span class="text-gray-800 font-medium case-id">${
+                              c.case_id ?? "N/A"
+                            }</span>
+                        </div>
+                    </td>
+
+                    <!-- Priority -->
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityClass} priority">
+                            ${(c.priority || "N/A").toUpperCase()}
                         </span>
-                      </div>
                     </td>
 
                     <!-- Case Status -->
-                    <td class="px-6 py-4 w-1/6">
-                      <span class="status-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 status">
-                        ${c.case_status ?? "N/A"}
+                    <td class="px-6 py-4">
+                      <span class="status-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} status">
+                        ${(c.case_status ?? "N/A").toUpperCase()}
                       </span>
                     </td>
 
                     <!-- Assigned To -->
-                    <td class="px-6 py-4 w-1/6">
-                      <span class="assigned-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        ${c.assigned_to || "N/A"}
+                    <td class="px-6 py-4">
+                      <span class="assigned-span inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${assignedClass}">
+                        ${assignedTo.toUpperCase()}
                       </span>
                     </td>
 
                     <!-- Progress -->
-                    <td class="px-6 py-4 w-1/6">
-                      <div class="flex items-center">
-                        <div class="bg-gray-200 rounded-full h-2 mr-3 w-4/12">
-                          <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%;"></div>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                <div class="bg-blue-600 h-2 rounded-full progress-bar" data-case-id="${c.case_id}"
+                                    style="width: ${progress}%; transition: width 0.5s;">
+                                </div>
+                            </div>
+                            <span class="text-sm font-semibold text-gray-700 progress-text" data-case-id="${c.case_id}">
+                                ${progress}%
+                            </span>
                         </div>
-                        <span class="text-sm text-gray-600">${progress}%</span>
-                      </div>
                     </td>
 
                     <!-- Created At -->
-                    <td class="px-6 py-4 text-sm text-gray-900 w-1/6">
+                    <td class="px-6 py-4 text-sm text-gray-900">
                       ${c.created_at ?? "N/A"}
                     </td>
 
                     <!-- Actions -->
-                    <td class="px-6 py-4 text-sm font-medium space-x-4 w-1/6 text-center">
+                    <td class="px-6 py-4 text-sm font-medium space-x-4">
                       <button class="text-blue-600 hover:text-blue-900 client_view_btn" data-case-id="${
                         c.case_id
                       }">
@@ -395,7 +443,7 @@ jQuery(document).ready(function ($) {
           });
         } else {
           tbody.html(
-            '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading cases</td></tr>'
+            '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error loading cases</td></tr>'
           );
         }
       }
@@ -413,7 +461,7 @@ jQuery(document).ready(function ($) {
         <div class="flex justify-center items-center h-32">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
-    `;
+    `;    
 
     // Fetch case details via AJAX
     $.post(
@@ -424,7 +472,7 @@ jQuery(document).ready(function ($) {
       },
       function (response) {
         if (response.success) {
-          const c = response.data.case;
+          const c = response.data.case;          
           // Generate HTML dynamically
           const html = `<div class="space-y-5 text-sm text-gray-700">
             <!-- Case Header -->
@@ -664,9 +712,20 @@ jQuery(document).ready(function ($) {
         $(this).show();
       } else {
         const status = $(this).find(".status").text().toLowerCase();
-        console.log(status);
-        
         $(this).toggle(status.indexOf(selected) > -1);
+      }
+    });
+  });
+
+  // ------------------------------------------------------------------ Case Priority Filter
+  $("#case-priority-filter").on("change", function () {
+    const selected = $(this).val().toLowerCase();
+    $("table tbody tr").filter(function () {
+      if (selected === "") {
+        $(this).show();
+      } else {
+        const priority = $(this).find(".priority").text().toLowerCase();
+        $(this).toggle(priority.indexOf(selected) > -1);
       }
     });
   });

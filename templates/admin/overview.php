@@ -221,3 +221,34 @@ $dashboard_cards = [
         <?php endforeach; ?>
     </div>
 </main>
+
+
+<!-- Chatbox -->
+<div id="chatbox" class="fixed bottom-0 right-4 z-50 w-96 bg-white border border-gray-300 rounded-t-lg shadow-lg hidden">
+    <div class="flex items-center justify-between p-3 bg-gray-100 border-b border-gray-300 rounded-t-lg">
+        <div id="chatboxUserListContainer" class="relative">
+            <button id="chatboxUserListButton" class="text-lg font-semibold text-gray-800">Chat</button>
+            <div id="chatboxUserList" class="absolute bottom-full mb-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg hidden">
+                <!-- User list will be dynamically loaded here -->
+            </div>
+        </div>
+        <button id="closeChatbox" class="text-gray-500 hover:text-gray-900">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div id="chatboxMessages" class="p-4 h-80 overflow-y-auto">
+        <!-- Messages will be dynamically loaded here -->
+    </div>
+    <div class="p-4 bg-white border-t border-gray-200">
+        <div class="flex items-center">
+            <input type="file" id="chatboxFile" class="hidden">
+            <button id="chatboxFileButton" class="mr-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <textarea style="color: #111" id="chatboxInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="1" placeholder="Type a message..."></textarea>
+            <button id="sendChatMessage" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>

@@ -90,13 +90,26 @@ foreach ($card_config as $item) {
     </div>
 
     <div class="relative w-full max-w-xs flex justify-end">
+
+        <!-- Message Button -->
+        <button style="margin-right: 20px; cursor: pointer;" id="messageButton"
+            class="relative inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 focus:outline-none ml-4">
+            <i style="font-size: 1.5rem !important" class="fa-regular fa-message"></i>
+
+            <div id="messageDot"
+                class="absolute w-3 h-3 bg-red-500 border-2 border-white rounded-full -top-0.5 start-2.5 hidden"></div>
+        </button>
+
+
         <!-- Client Notification Button -->
         <button id="clientDropdownNotificationButton"
             class="relative inline-flex items-center text-sm font-medium text-center text-gray-500 hover:text-gray-900 focus:outline-none"
             type="button" aria-haspopup="true" aria-expanded="false">
             <i style="font-size: 1.5rem !important" class="fa-regular fa-bell"></i>
-            
         </button>
+
+
+
 
         <!-- Client Dropdown -->
         <div id="clientDropdownNotification"
@@ -125,8 +138,7 @@ foreach ($card_config as $item) {
 </header>
 
 <main class="mt-6 container pixelcode">
-    <div
-        class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full rounded-lg my-4">
+    <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full rounded-lg my-4">
         <?php foreach ($cards as $card) : ?>
         <div class="p-4 rounded-lg bg-gray-100 shadow-md flex flex-col justify-between gap-4">
             <div class="flex items-center gap-4">
@@ -151,3 +163,35 @@ foreach ($card_config as $item) {
         <?php endforeach; ?>
     </div>
 </main>
+
+<!-- Chatbox -->
+<div id="chatbox" class="fixed bottom-0 right-4 z-50 w-96 bg-white border border-gray-300 rounded-t-lg shadow-lg hidden">
+    <div class="flex items-center justify-between p-3 bg-gray-100 border-b border-gray-300 rounded-t-lg">
+        <h3 style="font-size: 1.2rem; margin:0;padding:0" class="text-lg font-semibold text-gray-800">Chat</h3>
+        <div id="closeChatbox" class="text-gray-500 hover:text-gray-900 cursor-pointer">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                </path>
+            </svg>
+        </div>
+    </div>
+    <div id="chatboxMessages" class="p-4 h-80 overflow-y-auto">
+        <!-- Messages will be dynamically loaded here -->
+    </div>
+    <div class="p-4 bg-white border-t border-gray-200">
+        <div class="flex items-center">
+            <input type="file" id="chatboxFile" class="hidden">
+            <div id="chatboxFileButton"
+                class="mr-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-paperclip"></i>
+            </div>
+            <textarea style="color: #111" id="chatboxInput"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="1" placeholder="Type a message..."></textarea>
+            <div id="sendChatMessage" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+        </div>
+    </div>
+</div>

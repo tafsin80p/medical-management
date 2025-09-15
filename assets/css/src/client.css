@@ -250,6 +250,8 @@ button.border-blue-600 {
   display: none !important;
 }
 
+
+
 .pixelcodeTable table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -266,24 +268,15 @@ button.border-blue-600 {
 }
 
 .pixelcodeTable th {
-  background-color: #fff !important;
   color: #111 !important;
   font-weight: bolder !important;
 }
 
 .pixelcodeTable tr {
-  background-color: #fff !important;
   color: #111 !important;
   font-weight: bold !important;
 }
 
-.pixelcodeTable tr:nth-child(even) {
-  background-color: #fff !important;
-}
-
-.pixelcodeTable tr:hover {
-  background-color: #f1f1f1 !important;
-}
 
 .pixelcodeTable h6 {
   font-weight: bold !important;

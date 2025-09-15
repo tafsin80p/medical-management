@@ -26,19 +26,20 @@ defined('ABSPATH') || exit;
 </div>
 
 <!-- Cases Table -->
-<div class="overflow-x-auto bg-white rounded-lg shadow-md pixelcodeTable">
+<div class="overflow-x-auto bg-white rounded-lg shadow-sm pixelcodeTable border">
     <table class="w-full text-sm text-left text-gray-500 table">
         <thead class="bg-gray-50 text-xs text-gray-700 uppercase">
             <tr>
                 <th class="px-6 py-3">Case Name</th>
-                <th class="px-8 py-3">Status</th>
+                <th class="px-6 py-3">Priority</th>
+                <th class="px-6 py-3">Status</th>
                 <th class="px-6 py-3">Assigned To</th>
                 <th class="px-6 py-3">Progress</th>
                 <th class="px-6 py-3">Start Date</th>
                 <th class="px-6 py-3">Actions</th>
             </tr>
         </thead>
-        <tbody id='case-table-body' class="divide-y divide-gray-200">
+        <tbody id='case-table-body' class="divide-y divide-gray-200 odd:bg-white even:bg-gray-50">
             <!-- Dynamic rows will be inserted here -->
         </tbody>
     </table>

@@ -115,7 +115,7 @@ $clients = $wpdb->get_results("
                     <?= esc_html($last_form_date_display) ?>
                 </td>
                 <td class="px-6 py-4 flex gap-4 items-center">
-                    <button title='message'>
+                    <button title='message' class='start-chat' data-user-id='<?= esc_attr($client->user_id) ?>' data-user-name='<?= esc_attr($display_name) ?>'>
                         <!-- message icon -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">

@@ -134,6 +134,21 @@ add_action('wp_ajax_pixelcode_create_tables', function() {
                 KEY user_id (user_id)
             ) $charset_collate;
         ",
+
+        'pixelcode_live_massage' => "
+            CREATE TABLE {$wpdb->prefix}pixelcode_live_massage (
+                id BIGINT(20) NOT NULL AUTO_INCREMENT,
+                sender_id BIGINT(20) UNSIGNED NOT NULL,
+                recipient_id BIGINT(20) UNSIGNED NOT NULL,
+                message TEXT,
+                file_path VARCHAR(255),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                read_at DATETIME,
+                PRIMARY KEY (id),
+                KEY sender_id (sender_id),
+                KEY recipient_id (recipient_id)
+            ) $charset_collate;
+        ",
     ];
 
     $results = [];

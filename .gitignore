@@ -1,0 +1,34 @@
+# Dependencies
+/node_modules
+/vendor
+
+# WordPress specific
+/wp-content/uploads
+/wp-content/upgrade
+/wp-content/backup-db
+/wp-content/cache
+
+# Build files
+/build
+/dist
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Log files
+*.log
+debug.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Compressed files
+*.zip
+*.rar
+*.tar.gz

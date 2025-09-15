@@ -9,6 +9,7 @@ add_action('wp_ajax_add_dashboard_notification', function () {
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
 
     $message = sanitize_text_field($_POST['message']);
+    $type = sanitize_text_field($_POST['type']);
     // Check if a specific user_id is provided, otherwise default to the current user
     $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : get_current_user_id();
 
@@ -24,11 +25,12 @@ add_action('wp_ajax_add_dashboard_notification', function () {
         [
             'user_id'      => $user_id,
             'message'      => $message,
+            'type'         => $type,
             'time'         => current_time('mysql'),
             'admin_status' => 'unread', // Always unread for admin initially
             'user_status'  => $user_status,
         ],
-        ['%d', '%s', '%s', '%s', '%s']
+        ['%d', '%s', '%s', '%s', '%s', '%s']
     );
 
     wp_send_json_success(['message' => 'Notification saved!']);
@@ -51,14 +53,14 @@ add_action('wp_ajax_get_dashboard_notifications', function () {
     if (current_user_can('manage_options')) {
         // Admin: Get all notifications (for users and admin-specific)
         $notifications = $wpdb->get_results(
-            "SELECT * FROM {$table_name} WHERE admin_status = 'unread' ORDER BY time DESC",
+            "SELECT * FROM {$table_name} ORDER BY time DESC",
             ARRAY_A
         );
     } else {
         // Non-admin user: Get only their notifications
         $notifications = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$table_name} WHERE user_id = %d AND user_status = 'unread' ORDER BY time DESC",
+                "SELECT * FROM {$table_name} WHERE user_id = %d ORDER BY time DESC",
                 $user_id
             ),
             ARRAY_A
@@ -86,8 +88,8 @@ add_action('wp_ajax_mark_all_notifications_read', function () {
         // Admin: Mark all of their visible notifications as read
         $wpdb->update(
             $table_name,
-            ['admin_status' => 'read'], // Set admin_status to 'read'
-            ['admin_status' => 'unread'], // Where admin_status is 'unread'
+            ['admin_status' => 'read'], 
+            ['admin_status' => 'unread'], 
             ['%s'],
             ['%s']
         );
@@ -95,8 +97,8 @@ add_action('wp_ajax_mark_all_notifications_read', function () {
         // Non-admin user: Mark all of their notifications as read
         $wpdb->update(
             $table_name,
-            ['user_status' => 'read'], // Set user_status to 'read'
-            ['user_id' => $user_id, 'user_status' => 'unread'], // Where user_id matches and user_status is 'unread'
+            ['user_status' => 'read'], 
+            ['user_id' => $user_id, 'user_status' => 'unread'], 
             ['%s'],
             ['%d', '%s']
         );
@@ -444,4 +446,90 @@ function update_case_status_callback() {
     } else {
         wp_send_json_error("Failed to update case status");
     }
+}
+
+// --------------------------- Live Chat Functions ---------------------------
+
+add_action('wp_ajax_send_chat_message', 'send_chat_message');
+function send_chat_message() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in.']);
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'pixelcode_live_massage';
+
+    $sender_id = get_current_user_id();
+    $recipient_id = intval($_POST['recipient_id']);
+    $message = sanitize_textarea_field($_POST['message']);
+    $file_path = null;
+
+    if (!empty($_FILES['file']['name'])) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        $uploaded_file = wp_handle_upload($_FILES['file'], ['test_form' => false]);
+
+        if ($uploaded_file && !isset($uploaded_file['error'])) {
+            $file_path = $uploaded_file['url'];
+        } else {
+            wp_send_json_error(['message' => 'File upload failed: ' . $uploaded_file['error']]);
+        }
+    }
+
+    $wpdb->insert(
+        $table_name,
+        [
+            'sender_id' => $sender_id,
+            'recipient_id' => $recipient_id,
+            'message' => $message,
+            'file_path' => $file_path,
+        ],
+        ['%d', '%d', '%s', '%s']
+    );
+
+    wp_send_json_success(['message' => 'Message sent!']);
+}
+
+add_action('wp_ajax_get_chat_messages', 'get_chat_messages');
+function get_chat_messages() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in.']);
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'pixelcode_live_massage';
+    $current_user_id = get_current_user_id();
+    $other_user_id = intval($_GET['other_user_id']);
+
+    $messages = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE (sender_id = %d AND recipient_id = %d) OR (sender_id = %d AND recipient_id = %d) ORDER BY created_at ASC",
+        $current_user_id, $other_user_id, $other_user_id, $current_user_id
+    ), ARRAY_A);
+
+    wp_send_json_success($messages);
+}
+
+add_action('wp_ajax_get_all_chat_users', 'get_all_chat_users');
+function get_all_chat_users() {
+    if (!is_user_logged_in() || !current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Unauthorized']);
+    }
+
+    $users = get_users(['role__not_in' => ['administrator']]);
+
+    foreach ($users as $user) {
+        $last_seen = get_user_meta($user->ID, 'last_seen', true);
+        $user->is_online = (time() - $last_seen) < 15;
+    }
+
+    wp_send_json_success($users);
+}
+
+add_action('wp_ajax_update_user_status', 'update_user_status');
+function update_user_status() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in.']);
+    }
+
+    update_user_meta(get_current_user_id(), 'last_seen', time());
+    wp_send_json_success();
 }

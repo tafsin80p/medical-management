@@ -60,6 +60,22 @@ function pixelcode_enqueue_for_admin() {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('pixelcode_admin_nonce')
         ]);
+
+        // Custom chat JS
+        wp_enqueue_script(
+            'pixelcode-chat-js',
+            PIXELCODE_PLUGIN_URL . 'assets/js/chat.js',
+            ['jquery'],
+            '1.0.0',
+            true
+        );
+
+        // Localize chat script
+        wp_localize_script('pixelcode-chat-js', 'chat_object', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('pixelcode_chat_nonce'),
+            'isAdmin'  => current_user_can('manage_options')
+        ]);
     }
 }
 // Correct priority set (5 to load before most scripts/styles)
@@ -106,6 +122,22 @@ function pixelcode_enqueue_for_client() {
     wp_localize_script('pixelcode-client-js', 'ajax_object', [
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce('pixelcode_client_nonce')
+    ]);
+
+    // Custom chat JS
+    wp_enqueue_script(
+        'pixelcode-chat-js',
+        PIXELCODE_PLUGIN_URL . 'assets/js/chat.js',
+        ['jquery'],
+        '1.0.0',
+        true
+    );
+
+    // Localize chat script
+    wp_localize_script('pixelcode-chat-js', 'chat_object', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('pixelcode_chat_nonce'),
+        'isAdmin'  => false
     ]);
 }
 add_action('wp_enqueue_scripts', 'pixelcode_enqueue_for_client');
