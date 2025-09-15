@@ -1,24 +1,32 @@
 <?php
 // ------------------------------- add notification --------------------------------------
-add_action('wp_ajax_add_dashboard_notification', function() {
-    if ( ! is_user_logged_in() ) {
+add_action('wp_ajax_add_dashboard_notification', function () {
+    if (!is_user_logged_in()) {
         wp_send_json_error(['message' => 'You must be logged in.']);
-    }    
+    }
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
 
-    $message   = sanitize_text_field($_POST['message']);
-    $user_id   = get_current_user_id();
+    $message = sanitize_text_field($_POST['message']);
+    // Check if a specific user_id is provided, otherwise default to the current user
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : get_current_user_id();
+
+    // if user_id is 0, it's an admin notification
+    if ($user_id === 0) {
+        $user_status = 'read'; // Users should not see admin-only notifications
+    } else {
+        $user_status = 'unread';
+    }
 
     $wpdb->insert(
         $table_name,
         [
-            'user_id' => $user_id,
-            'message' => $message,
-            'time'    => current_time('mysql'),
-            'admin_status' => 'unread',   
-            'user_status'  => 'unread'  
+            'user_id'      => $user_id,
+            'message'      => $message,
+            'time'         => current_time('mysql'),
+            'admin_status' => 'unread', // Always unread for admin initially
+            'user_status'  => $user_status,
         ],
         ['%d', '%s', '%s', '%s', '%s']
     );
@@ -30,25 +38,27 @@ add_action('wp_ajax_add_dashboard_notification', function() {
 
 
 // --------------------------- AJAX: Get Notifications ---------------------------
-add_action('wp_ajax_get_dashboard_notifications', function() { 
+add_action('wp_ajax_get_dashboard_notifications', function () {
 
     if (!is_user_logged_in()) {
         wp_send_json_error('Not logged in');
-    }    
+    }
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
-    $user_id    = get_current_user_id();
+    $user_id = get_current_user_id();
 
     if (current_user_can('manage_options')) {
+        // Admin: Get all notifications (for users and admin-specific)
         $notifications = $wpdb->get_results(
-            "SELECT * FROM $table_name ORDER BY time ASC",
+            "SELECT * FROM {$table_name} WHERE admin_status = 'unread' ORDER BY time DESC",
             ARRAY_A
         );
     } else {
+        // Non-admin user: Get only their notifications
         $notifications = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table_name WHERE user_id = %d ORDER BY time ASC",
+                "SELECT * FROM {$table_name} WHERE user_id = %d AND user_status = 'unread' ORDER BY time DESC",
                 $user_id
             ),
             ARRAY_A
@@ -62,31 +72,33 @@ add_action('wp_ajax_get_dashboard_notifications', function() {
 
 
 // --------------------------- AJAX: Mark All Notifications Read ---------------------------
-add_action('wp_ajax_mark_all_notifications_read', function() {
+add_action('wp_ajax_mark_all_notifications_read', function () {
 
-    if ( ! is_user_logged_in() ) {
+    if (!is_user_logged_in()) {
         wp_send_json_error(['message' => 'Not logged in']);
-    }    
+    }
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'pixelcode_dashboard_notifications';
-    $user_id    = get_current_user_id();
+    $user_id = get_current_user_id();
 
-    if ( current_user_can('manage_options') ) {
+    if (current_user_can('manage_options')) {
+        // Admin: Mark all of their visible notifications as read
         $wpdb->update(
             $table_name,
-            ['admin_status' => 'read'],
-            ['admin_status' => 'unread'],
+            ['admin_status' => 'read'], // Set admin_status to 'read'
+            ['admin_status' => 'unread'], // Where admin_status is 'unread'
             ['%s'],
             ['%s']
         );
     } else {
+        // Non-admin user: Mark all of their notifications as read
         $wpdb->update(
             $table_name,
-            ['user_status' => 'read'],
-            ['user_id' => $user_id, 'user_status' => 'unread'],
+            ['user_status' => 'read'], // Set user_status to 'read'
+            ['user_id' => $user_id, 'user_status' => 'unread'], // Where user_id matches and user_status is 'unread'
             ['%s'],
-            ['%d','%s']
+            ['%d', '%s']
         );
     }
 

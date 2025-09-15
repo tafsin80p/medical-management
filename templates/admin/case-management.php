@@ -7,6 +7,7 @@ global $wpdb;
 $results = $wpdb->get_results("
     SELECT 
         c.case_id,
+        c.user_id,
         c.first_name,
         c.last_name,
         c.priority,
@@ -125,7 +126,7 @@ $priorityColors = [
                     </span>
                     <select id="priority-dropdown-<?= $case_id ?>"
                         class="priority-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
-                        data-case-id="<?= $case_id ?>">
+                        data-case-id="<?= $case_id ?>" data-user-id="<?= esc_attr($row->user_id) ?>">
                         <option value="low" <?= $priority === 'low' ? 'selected' : '' ?>>Low</option>
                         <option value="high" <?= $priority === 'high' ? 'selected' : '' ?>>High</option>
                         <option value="premium" <?= $priority === 'premium' ? 'selected' : '' ?>>Premium</option>
@@ -140,7 +141,7 @@ $priorityColors = [
                     </span>
                     <select id="status-dropdown-<?= $case_id ?>"
                         class="status-dropdown ml-2 text-sm border rounded px-2 py-1 hidden"
-                        data-case-id="<?= $case_id ?>">
+                        data-case-id="<?= $case_id ?>" data-user-id="<?= esc_attr($row->user_id) ?>">
                         <option value="">All Statuses</option>
                         <?php foreach ($status_progress as $st => $pr): ?>
                         <option value="<?= esc_attr($st) ?>" <?= $st === $status ? 'selected' : '' ?>>
@@ -158,7 +159,7 @@ $priorityColors = [
                     </span>
                     <select id="assigned-dropdown-<?= $case_id ?>"
                         class="assigned-dropdown hidden ml-2 text-sm border rounded px-2 py-1"
-                        data-case-id="<?= $case_id ?>">
+                        data-case-id="<?= $case_id ?>" data-user-id="<?= esc_attr($row->user_id) ?>">
                         <option value="">UNASSIGNED</option>
                         <?php foreach ($authors as $author): ?>
                         <option data-dr-id="<?= esc_attr($author->ID) ?>" value="<?= esc_html($author->display_name) ?>"
@@ -191,7 +192,7 @@ $priorityColors = [
                 <!-- Actions -->
                 <td class="px-6 py-4 text-sm font-medium space-x-4">
                     <!-- View -->
-                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn" data-case-id="<?= $case_id ?>">
+                    <button class="text-blue-600 hover:text-blue-900 admin_view_btn" data-case-id="<?= $case_id ?>" data-user-id="<?= esc_attr($row->user_id) ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px"
                             height="20px" viewBox="0 -4 20 20" version="1.1">
 
@@ -216,7 +217,7 @@ $priorityColors = [
                     </button>
                     <!-- Edit -->
                     <button class="text-green-600 hover:text-green-900 cases_edit_button"
-                        data-case-id="<?= $case_id ?>">
+                        data-case-id="<?= $case_id ?>" data-user-id="<?= esc_attr($row->user_id) ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"
                             fill="none">
                             <path

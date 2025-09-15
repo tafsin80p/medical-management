@@ -162,7 +162,7 @@ jQuery(document).ready(function ($) {
   }
 
   // Add notification locally AND save to DB
-  function pushNotification(message, type) {
+  function pushNotification(message, type, userId = null) {
     // 1. Show toast
     showNotification(message, type);
 
@@ -170,11 +170,17 @@ jQuery(document).ready(function ($) {
     addNotification(message, type);
 
     // 3. Save to DB
-    $.post(ajax_object.ajax_url, {
+    let data = {
       action: "add_dashboard_notification",
       nonce: ajax_object.nonce,
       message: message,
-    });
+    };
+
+    if (userId) {
+      data.user_id = userId;
+    }
+
+    $.post(ajax_object.ajax_url, data);
   }
 
   // ---------------------------- Test DB Button functionality ----------------------------
@@ -531,6 +537,7 @@ jQuery(document).ready(function ($) {
   // Priority Change
   $(".priority-dropdown").on("change", function () {
     const caseId = $(this).data("case-id");
+    const userId = $(this).data("user-id");
     const newPriority = $(this).val();
     const badge = $("#priority-badge-" + caseId);
 
@@ -568,19 +575,20 @@ jQuery(document).ready(function ($) {
     })
       .done(function (response) {
         if (response.success) {
-          pushNotification("Priority Update Success", "success");
+          pushNotification("Priority Update Success", "success", userId);
         } else {
-          pushNotification("Failed to execute request", "error");
+          pushNotification("Failed to execute request", "error", userId);
         }
       })
       .fail(function (xhr, status, error) {
-        pushNotification("Failed to execute request", "error");
+        pushNotification("Failed to execute request", "error", userId);
       });
   });
 
   // Status Change
   $(".status-dropdown").on("change", function () {
     const caseId = $(this).data("case-id");
+    const userId = $(this).data("user-id");
     const newStatus = $(this).val();
     const badge = $("#status-badge-" + caseId);
 
@@ -608,19 +616,20 @@ jQuery(document).ready(function ($) {
     })
       .done(function (response) {
         if (response.success) {
-          pushNotification("Status Update Success", "success");
+          pushNotification("Status Update Success", "success", userId);
         } else {
-          pushNotification("Failed to execute request", "error");
+          pushNotification("Failed to execute request", "error", userId);
         }
       })
       .fail(function (xhr, status, error) {
-        pushNotification("Failed to execute request", "error");
+        pushNotification("Failed to execute request", "error", userId);
       });
   });
 
   // Assigned To Change
   $(".assigned-dropdown").on("change", function () {
     const caseId = $(this).data("case-id");
+    const userId = $(this).data("user-id");
     const newAssigned = $(this).val();
     const drId = $(this).find(":selected").data("dr-id");
 
@@ -650,13 +659,13 @@ jQuery(document).ready(function ($) {
     })
       .done(function (response) {
         if (response.success) {
-          pushNotification("Dr. Assigned Success", "success");
+          pushNotification("Dr. Assigned Success", "success", userId);
         } else {
-          pushNotification("Failed to execute request", "error");
+          pushNotification("Failed to execute request", "error", userId);
         }
       })
       .fail(function (xhr, status, error) {
-        pushNotification("Failed to execute request", "error");
+        pushNotification("Failed to execute request", "error", userId);
       });
   });
 
