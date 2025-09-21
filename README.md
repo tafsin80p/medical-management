@@ -8,6 +8,7 @@ Plugin Overview :
 Admin Dashboard  <br/>
 
 Case-Management <br/>
+
 <img width="1278" height="703" alt="image" src="https://github.com/user-attachments/assets/4f948750-c46f-4a16-b01e-5055f4c3b3a8" />
 
 Client-Section <br/>
