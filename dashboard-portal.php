@@ -4,9 +4,9 @@ Plugin Name: Dashboard Portal
 Plugin URI: 
 Description: A HIPAA-compliant client intake, portal, document delivery, and secure messaging system. This plugin provides a secure platform for managing sensitive client data, supporting features like encrypted messaging, secure document sharing, and client intake forms.
 Version: 1.0.2
-Author: PIXELCODE
-Author URI: https://portfolio-client-y9gw.onrender.com
-Text Domain: pixelcode
+Author: Tafsin Ahmed Mohim
+Author URI: https://tafsinahmed.info
+Text Domain: tafsinahmed
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 6.2.2
@@ -140,7 +140,7 @@ function pixelcode_enqueue_for_client() {
         'isAdmin'  => false
     ]);
 }
-add_action('wp_enqueue_scripts', 'pixelcode_enqueue_for_client');
+add_action('wp_enqueue_scripts', 'pixelcode_enqueue_for_client', 999);
 
 
 // Include dashboards
