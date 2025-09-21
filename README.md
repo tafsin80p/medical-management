@@ -2,6 +2,52 @@
 
 A HIPAA-compliant client intake, portal, document delivery, and secure messaging system for WordPress. This plugin provides a secure platform for managing sensitive client data, supporting features like encrypted messaging, secure document sharing, and client intake forms.
 
+Plugin Overview :
+<br/>
+
+Admin Dashboard  <br/>
+
+Case-Management <br/>
+<img width="1278" height="703" alt="image" src="https://github.com/user-attachments/assets/4f948750-c46f-4a16-b01e-5055f4c3b3a8" />
+
+Client-Section <br/>
+
+<img width="1424" height="572" alt="image" src="https://github.com/user-attachments/assets/f9fc051c-566c-4f4a-8184-9be768bdfd73" />
+
+Analytics-Section <br/>
+
+<img width="1005" height="649" alt="image" src="https://github.com/user-attachments/assets/e0807beb-c37d-4b38-9709-9f223618d11d" />
+
+Team-Section <br/>
+
+<img width="1423" height="644" alt="image" src="https://github.com/user-attachments/assets/99c7b6af-a8e8-433e-a9c4-5a3176203f35" />
+
+Case Details View <br/>
+
+<img width="660" height="623" alt="image" src="https://github.com/user-attachments/assets/4ff1c2ad-2862-4964-bfce-713934bc7f5e" />
+
+
+
+Client Portal Dashboard <br/>
+
+Case-Section <br/>
+
+<img width="1204" height="645" alt="image" src="https://github.com/user-attachments/assets/15280f36-633c-44fe-95cc-dbacafeedb84" />
+
+Case-Details <br/>
+
+<img width="461" height="647" alt="image" src="https://github.com/user-attachments/assets/112567af-4ff6-4804-be05-85f755374adf" />
+
+Intake-Form <br/>
+
+<img width="637" height="557" alt="image" src="https://github.com/user-attachments/assets/a518f69e-09b8-4089-9114-dc906429c2a3" />
+
+Chat-System-Between Client And Admin <br/>
+
+<img width="1406" height="644" alt="image" src="https://github.com/user-attachments/assets/97452378-726c-41ee-a7af-3bdf2c7a008e" />
+
+
+
 ## Features
 
 - **Admin Dashboard:** Manage cases, clients, team members, and view analytics.
